@@ -15,7 +15,7 @@ Zeszyt ćwiczeń na czas: arytmetyka, kolejność działań, procenty, ułamki,
 potęgi, ciągi, zagadki logiczne i triki rachunkowe. **Nie liczy się pojedynczy
 wynik — liczy się ile zadań zrobisz i jak szybko.**
 
-**3424 zadania · 88 zestawów · 86 stron A4** — i gotowy **plan na 13 tygodni**,
+**4424 zadania · 113 zestawów · 108 stron A4** — i gotowy **plan na 17 tygodni**,
 dzień po dniu.
 
 ## Quick start
@@ -65,14 +65,15 @@ pomyłek.
 Odpowiedzi z tyłu mają w żywej paginie zakres zestawów na stronie
 (`Odpowiedzi 26–37`), bo osiem stron tablicy bez tego przegląda się palcem.
 
-## Plan na 13 tygodni
+## Plan na 17 tygodni
 
-91 dni, jeden zestaw dziennie, kwadrans. Książki można używać bez planu — po
+119 dni, jeden zestaw dziennie, kwadrans. Kto zatrzyma się po trzynastu
+tygodniach, i tak skończył kurs — czwarty blok jest nadprogramowy. Książki można używać bez planu — po
 kolei — ale plan zdejmuje z Ciebie codzienną decyzję, co robić, i układa
 kolejność tak, żeby nie była przypadkowa:
 
 - **Rosnące obciążenie** — cztery tygodnie Bloku I, pięć Bloku II, cztery
-  Bloku III.
+  Bloku III i cztery Bloku IV.
 - **Przeplot** — dwa dni pod rząd nigdy nie ćwiczą tej samej rodziny zadań.
   Sześć zestawów dodawania w sześć dni idzie *szybciej*, gdy się je robi,
   i zostaje w głowie gorzej.
@@ -113,7 +114,9 @@ rzeczy, które umiesz, i kończysz na takich, które trzeba rozłożyć na kroki
 | **I — Fundament** | ★ | dwie cyfry, tabliczka, dopełnienia, jednostki, równania jednokrokowe | 24 |
 | **II — Tempo** | ★★ | trzy cyfry, procenty, ułamki, reszty, potęgi, kolejność działań | 34 |
 | **III — Wyzwanie** | ★★★ | cztery cyfry, mnożenie dwucyfrowe, nawiasy z potęgami, procent od drugiej strony | 23 |
+| **IV — Mistrzostwo** | ★★★ | równania dwukrokowe, ułamki o różnych mianownikach, procent składany, działania poniżej zera, jednostki kwadratowe | 24 |
 | **Łamigłówki** | ★★ | zagadki, ciągi, triki — pisane ręcznie | 4 |
+| **Pomiary kontrolne** | ★–★★★ | po jednym na blok, pięć wierszy na pomiar | 4 |
 
 Gwiazdki opisują **zestaw**, nie pojedyncze zadanie. Cel czasowy też: to
 sekundy na zadanie razy długość zestawu, więc rośnie razem z pracą, a nie
@@ -128,17 +131,17 @@ dlatego, że ktoś go zgadł.
 │   ├── preamble.tex                  # Zestaw, \z, magazyn odpowiedzi
 │   ├── structure.tex                 # JEDNA lista zestawów
 │   ├── frontmatter/                  # Tytuł, „Jak korzystać”, plan
-│   ├── plan/generated/               # GENEROWANE — tabele 13 tygodni
+│   ├── plan/generated/               # GENEROWANE — tabele planu i jego liczby
 │   └── sets/
 │       ├── 20-zagadki.tex            # Pisane ręcznie: zagadki, ciągi,
 │       ├── 21-ciagi.tex              #   wyzwania, triki — tego się nie generuje
 │       ├── 22-mieszane.tex
 │       ├── 23-triki.tex
-│       └── generated/                # GENEROWANE (make sets) — 81 zestawów
-│           └── _blok-{1,2,3}.tex     #   listy \input, jedna na rozdział
+│       └── generated/                # GENEROWANE (make sets) — 109 zestawów
+│           └── _blok-*.tex           #   listy \input, jedna na rozdział
 ├── tools/
 │   ├── gen_sets.py                   # Generator zestawów + bramka drift
-│   ├── gen_plan.py                   # Generator planu 13 tygodni
+│   ├── gen_plan.py                   # Generator planu i harmonogramu
 │   ├── checkanswers.py               # Przelicza odpowiedzi drugą ścieżką
 │   └── checklog.py                   # Bramka logu (nie kod wyjścia!)
 ├── deck-archive/                     # Poprzednie wersje — nie budowane

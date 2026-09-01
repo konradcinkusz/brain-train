@@ -610,6 +610,176 @@ def mieszane(r, draws):
 
 
 # ------------------------------------------------------------------
+#  Blok IV's builders. Nothing here is a wider range of something the book
+#  already drills -- that is what the II and III sets are for. Each of these
+#  asks for a step the earlier blocks deliberately kept out: an equation with
+#  two moves in it, a common denominator that has to be found rather than
+#  read off, a percentage applied twice, an operation done below zero.
+# ------------------------------------------------------------------
+
+def rownania_dwukrokowe(r):
+    """Two moves, and the order of the two is the whole exercise: undo the
+    addition before the multiplication, which is the reverse of the order the
+    expression was built in."""
+    x = r.randint(2, 30)
+    a, b = r.randint(2, 12), r.randint(3, 40)
+    if r.random() < 0.5:
+        return f"${a}x + {b} = {fmt(a * x + b)}$", fmt(x)
+    return f"${a}x - {b} = {fmt(a * x - b)}$", fmt(x)
+
+
+def ulamki_rozne(r):
+    """Denominators that do NOT divide one another, so the common denominator
+    has to be built. ulamki() keeps one a multiple of the other on purpose --
+    this is the step that program leaves out."""
+    while True:
+        d1, d2 = r.choice(DENS), r.choice(DENS)
+        if d1 % d2 and d2 % d1:
+            break
+    n1, n2 = r.randint(1, d1 - 1), r.randint(1, d2 - 1)
+    f1, f2 = Fraction(n1, d1), Fraction(n2, d2)
+    if r.random() < 0.5:
+        return f"${n1}/{d1} + {n2}/{d2}$", frac_txt(f1 + f2)
+    if f2 > f1:
+        f1, f2, n1, d1, n2, d2 = f2, f1, n2, d2, n1, d1
+    return f"${n1}/{d1} - {n2}/{d2}$", frac_txt(f1 - f2)
+
+
+def procent_skladany(r):
+    """Two changes one after the other, which do not add up -- the second acts
+    on what the first left. Up-then-down by the same rate never returns to the
+    start, and that is the trap this set exists for."""
+    # BOTH STEPS HAVE TO COME OUT WHOLE, and the draft only checked that the
+    # arithmetic ran: `100` up 25 then up 10 is 137.5, which integer division
+    # printed as 137. That is a wrong answer, not a rounded one -- a reader
+    # doing it exactly gets a number the book says is not the number. Rejected
+    # and redrawn instead, which costs a few draws and cannot be wrong.
+    while True:
+        base = r.choice([100, 200, 400, 500, 800, 1000, 1200, 2000])
+        p, q = r.choice([10, 20, 25, 50]), r.choice([10, 20, 25, 50])
+        up1, up2 = r.random() < 0.5, r.random() < 0.5
+        v1 = base * (100 + p if up1 else 100 - p)
+        if v1 % 100:
+            continue
+        v2 = (v1 // 100) * (100 + q if up2 else 100 - q)
+        if v2 % 100:
+            continue
+        # WRITTEN AS SIGNED PERCENTAGES, NOT AS A SENTENCE. `1200 o 50% w
+        # dół, potem o 25% w górę` is eleven words, and a set of forty of them
+        # measures reading speed -- which is the one thing this book says it
+        # is not measuring. `-50% +25%` says the same in the notation the
+        # reader is already doing arithmetic in, and it fits three columns
+        # where the sentence needed two.
+        return (rf"${fmt(base)}$ ${'+' if up1 else '-'}{p}\%$ "
+                rf"${'+' if up2 else '-'}{q}\%$", fmt(v2 // 100))
+
+
+def szescienne(r, n):
+    """Cube roots, in words for the reason the square roots are: nothing here
+    emits a radical."""
+    return [(f"pierwiastek sześcienny z ${fmt(a ** 3)}$", fmt(a))
+            for a in r.sample(range(2, 2 + n), n)]
+
+
+def kolejnosc_ujemne(r):
+    """Order of operations below zero, where the sign of a product and the sign
+    of a sum stop agreeing with each other."""
+    a, b, c = r.randint(2, 12), r.randint(2, 12), r.randint(2, 15)
+    shape = r.randint(0, 2)
+    if shape == 0:
+        return rf"$-{a} \times {b} + {c}$", sgn(-a * b + c)
+    if shape == 1:
+        return rf"${c} - {a} \times {b}$", sgn(c - a * b)
+    # c is a multiple of a and so is a*b, so the bracket divides exactly. The
+    # first draft guarded the non-dividing case by printing 0, which is a
+    # wrong answer rather than a missing one -- checkanswers.py caught it.
+    c = a * r.randint(1, 5)
+    return rf"$({c} - {a * b}) \div {a}$", sgn((c - a * b) // a)
+
+
+def proporcje(r):
+    """A proportion with one term missing. Built from the ratio outwards so the
+    answer is whole -- the exercise is seeing the ratio, not dividing badly."""
+    k = r.randint(2, 12)
+    a, b = r.randint(2, 9), r.randint(2, 9)
+    return f"${a} : {b} = {fmt(a * k)} : ?$", fmt(b * k)
+
+
+def srednia_wazona(r):
+    """A weighted mean, where the naive answer is the mean of the two values
+    and the right one is not."""
+    v1, v2 = r.randint(2, 9) * 10, r.randint(2, 9) * 10
+    w1, w2 = r.randint(1, 4), r.randint(1, 4)
+    while (v1 * w1 + v2 * w2) % (w1 + w2):
+        w1, w2 = r.randint(1, 4), r.randint(1, 4)
+    return (f"${v1}$ z wagą ${w1}$, ${v2}$ z wagą ${w2}$",
+            fmt((v1 * w1 + v2 * w2) // (w1 + w2)))
+
+
+SQ_UNITS = [("m^2", "cm^2", 10000), ("km^2", "m^2", 1000000),
+            ("ha", "m^2", 10000), ("cm^2", "mm^2", 100)]
+
+
+def jednostki_kwadratowe(r):
+    """Areas, where the factor is the length factor SQUARED -- which is the one
+    conversion nearly everybody gets wrong by a factor of a hundred."""
+    big, small, k = r.choice(SQ_UNITS)
+    a = r.randint(2, 40)
+    if r.random() < 0.5:
+        return rf"${a}$ ${big}$ $\rightarrow$ ${small}$", fmt(a * k)
+    return rf"${fmt(a * k)}$ ${small}$ $\rightarrow$ ${big}$", fmt(a)
+
+
+def czas_dodawanie(r):
+    """Adding two durations, where sixty is the base and the carry does not
+    happen at ten."""
+    h1, m1 = r.randint(0, 4), r.choice([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55])
+    h2, m2 = r.randint(0, 4), r.choice([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55])
+    t = (h1 * 60 + m1) + (h2 * 60 + m2)
+    return (f"${h1}$ h ${m1}$ min $+$ ${h2}$ h ${m2}$ min",
+            f"{t // 60} h {t % 60} min")
+
+
+def dzielenie_dziesietne(r):
+    """A decimal divided by a whole number, built from the quotient outwards so
+    it comes out to one place and the drill is the point, not the remainder."""
+    q = r.randint(11, 199)
+    while q % 10 == 0:
+        q = r.randint(11, 199)
+    d = r.randint(2, 9)
+    return rf"${dec(q * d)} \div {d}$", dect(q)
+
+
+def potegi_dzialania(r):
+    """Same base, so the exponents add or subtract and nothing is multiplied
+    out. The whole point is not computing either side."""
+    b = r.choice([2, 3, 5, 10])
+    e1, e2 = r.randint(2, 6), r.randint(2, 5)
+    if r.random() < 0.5:
+        return rf"${b}^{{{e1}}} \times {b}^{{{e2}}}$", fmt(b ** (e1 + e2))
+    e1 += e2
+    return rf"${b}^{{{e1}}} \div {b}^{{{e2}}}$", fmt(b ** (e1 - e2))
+
+
+def procent_zmiany(r):
+    """From two numbers to the percentage between them. The base is the FIRST
+    one, which is the half people drop."""
+    # Same trap as procent_skladany: `150` up 25 is 187.5, and printing 187
+    # makes the printed answer of 25\% false by a third of a point. Redraw
+    # rather than round.
+    while True:
+        base = r.choice([20, 40, 50, 80, 100, 120, 150, 200, 250, 400])
+        p = r.choice([10, 20, 25, 50, 75, 100])
+        up = r.random() < 0.5
+        v = base * (100 + p if up else 100 - p)
+        if v % 100 or v == 0:
+            continue
+        # The set is titled `O ile procent`, so the question does not have to
+        # ask again -- an arrow between the two numbers is the whole of it.
+        return (rf"${fmt(base)} \rightarrow {fmt(v // 100)}$", f"{p}\%")
+
+
+# ------------------------------------------------------------------
 #  The sets, in the order the reader meets them.
 #
 #  The list IS the ladder, and it is now three blocks long because the book is
@@ -853,6 +1023,74 @@ SETS = [
         ])),
 
     # ---------------------------------------------------------------
+    #  Blok IV -- Mistrzostwo. The fourth month, and nothing in it is a wider
+    #  range of something the earlier blocks already drill -- that is what
+    #  their own second and third sets are for. Each set here asks for a step
+    #  the ladder deliberately kept out: two moves in an equation, a common
+    #  denominator that has to be built, a percentage applied twice, an
+    #  operation carried out below zero.
+    # ---------------------------------------------------------------
+    Set("82-rownania-dwukrokowe", "Równania dwukrokowe", 4, 3, 9, 3, 1201, "rownania-2",
+        lambda r: distinct(N, lambda: rownania_dwukrokowe(r))),
+    Set("83-ulamki-rozne", "Ułamki o różnych mianownikach", 4, 3, 10, 3, 1202, "ulamki-rozne",
+        lambda r: distinct(N, lambda: ulamki_rozne(r))),
+    Set("84-mnozenie-2x2-duze", "Mnożenie dwucyfrowe — duże", 4, 3, 18, 3, 1203, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 51, 99, 51, 99))),
+    Set("85-procent-skladany", "Procent składany", 4, 3, 13, 3, 1204, "procent-skladany",
+        lambda r: distinct(N, lambda: procent_skladany(r))),
+    Set("86-szescienne", "Pierwiastki sześcienne", 4, 3, 10, 2, 1205, "szescienne",
+        lambda r: szescienne(r, N)),
+    Set("87-kolejnosc-ujemne", "Kolejność działań poniżej zera", 4, 3, 11, 2, 1206, "kolejnosc-ujemne",
+        lambda r: distinct(N, lambda: kolejnosc_ujemne(r))),
+    Set("88-proporcje", "Proporcje", 4, 3, 9, 3, 1207, "proporcje",
+        lambda r: distinct(N, lambda: proporcje(r))),
+    Set("89-potegi-dzialania", "Działania na potęgach", 4, 3, 9, 3, 1208, "potegi-dzialania",
+        lambda r: distinct(N, lambda: potegi_dzialania(r))),
+    Set("90-jednostki-kwadratowe", "Jednostki kwadratowe", 4, 3, 10, 2, 1209, "jednostki-kw",
+        lambda r: distinct(N, lambda: jednostki_kwadratowe(r))),
+    Set("91-czas-dodawanie", "Dodawanie czasu", 4, 3, 10, 2, 1210, "czas-dodawanie",
+        lambda r: distinct(N, lambda: czas_dodawanie(r)), True),
+    Set("92-dzielenie-dziesietne", "Dzielenie dziesiętnych", 4, 3, 11, 3, 1211, "dziesietne",
+        lambda r: distinct(N, lambda: dzielenie_dziesietne(r))),
+    Set("93-srednia-wazona", "Średnia ważona", 4, 3, 13, 2, 1212, "srednia-wazona",
+        lambda r: distinct(N, lambda: srednia_wazona(r)), True),
+    Set("94-procent-zmiany", "O ile procent", 4, 3, 12, 3, 1213, "procent-zmiany",
+        lambda r: distinct(N, lambda: procent_zmiany(r))),
+    Set("95-dodawanie-5c", "Dodawanie pięciocyfrowe", 4, 3, 15, 3, 1214, "dodawanie",
+        lambda r: distinct(N, lambda: dodawanie(r, 10001, 89999))),
+    Set("96-odejmowanie-5c", "Odejmowanie pięciocyfrowe", 4, 3, 15, 3, 1215, "odejmowanie",
+        lambda r: distinct(N, lambda: odejmowanie(r, 10001, 89999))),
+    Set("97-mnozenie-3x2", "Mnożenie trzycyfrowe przez dwucyfrowe", 4, 3, 20, 3, 1216, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 102, 499, 12, 29))),
+    Set("98-kwadraty-3c", "Kwadraty trzycyfrowe", 4, 3, 16, 3, 1217, "kwadraty",
+        lambda r: kwadraty(r, N, 91)),
+    Set("99-dzielenie-5c", "Dzielenie pięciocyfrowe", 4, 3, 16, 3, 1218, "dzielenie",
+        lambda r: distinct(N, lambda: dzielenie(r, 12, 49, 201, 999))),
+    Set("100-triki-mistrz", "Mnożenie na skróty IV", 4, 3, 9, 3, 1219, "triki",
+        lambda r: distinct(N, lambda: triki_duze(r))),
+    Set("101-ulamki-rozne-b", "Ułamki o różnych mianownikach II", 4, 3, 10, 3, 1220, "ulamki-rozne",
+        lambda r: distinct(N, lambda: ulamki_rozne(r))),
+    Set("102-kolejnosc-nawiasy-b", "Nawiasy i potęgi II", 4, 3, 14, 2, 1221, "kolejnosc",
+        lambda r: distinct(N, lambda: kolejnosc_nawiasy(r))),
+    Set("103-procent-skladany-b", "Procent składany II", 4, 3, 13, 3, 1222, "procent-skladany",
+        lambda r: distinct(N, lambda: procent_skladany(r))),
+    Set("104-mieszane-mistrz", "Mieszane — mistrzostwo", 4, 3, 12, 3, 1223, "mieszane",
+        lambda r: mieszane(r, [
+            lambda: rownania_dwukrokowe(r),
+            lambda: ulamki_rozne(r),
+            lambda: potegi_dzialania(r),
+            lambda: kolejnosc_ujemne(r),
+            lambda: proporcje(r),
+        ])),
+    Set("105-mieszane-mistrz-b", "Mieszane — mistrzostwo II", 4, 3, 14, 3, 1224, "mieszane",
+        lambda r: mieszane(r, [
+            lambda: mnozenie(r, 51, 99, 51, 99),
+            lambda: dzielenie_dziesietne(r),
+            lambda: proporcje(r),
+            lambda: potegi_dzialania(r),
+        ])),
+
+    # ---------------------------------------------------------------
     #  Pomiary kontrolne -- one per block, and the only sets in the book
     #  designed to be done REPEATEDLY. Each carries five scoring rows
     #  instead of one, because a single measurement of anything says
@@ -863,14 +1101,14 @@ SETS = [
     #  month, and an easy mixed set re-done in week 13 measures how bored
     #  they were rather than how fast they got.
     # ---------------------------------------------------------------
-    Set("82-kontrolny-1", "Pomiar kontrolny I", 5, 1, 5.5, 3, 1157, "kontrolny",
+    Set("110-kontrolny-1", "Pomiar kontrolny I", 9, 1, 5.5, 3, 1157, "kontrolny",
         lambda r: mieszane(r, [
             lambda: dodawanie(r, 11, 99),
             lambda: odejmowanie(r, 11, 99),
             lambda: mnozenie(r, 2, 9, 2, 9),
             lambda: dzielenie(r, 2, 9, 2, 9),
         ]), rows=5),
-    Set("83-kontrolny-2", "Pomiar kontrolny II", 5, 2, 9, 3, 1158, "kontrolny",
+    Set("111-kontrolny-2", "Pomiar kontrolny II", 9, 2, 9, 3, 1158, "kontrolny",
         lambda r: mieszane(r, [
             lambda: dodawanie(r, 101, 899),
             lambda: mnozenie(r, 12, 99, 3, 9),
@@ -878,13 +1116,21 @@ SETS = [
             lambda: reszty(r),
             lambda: czesci(r),
         ]), rows=5),
-    Set("84-kontrolny-3", "Pomiar kontrolny III", 5, 3, 14, 2, 1159, "kontrolny",
+    Set("112-kontrolny-3", "Pomiar kontrolny III", 9, 3, 14, 2, 1159, "kontrolny",
         lambda r: mieszane(r, [
             lambda: mnozenie(r, 12, 49, 12, 49),
             lambda: dzielenie(r, 3, 12, 11, 40),
             lambda: procenty_trudne(r),
             lambda: kolejnosc(r),
             lambda: dziesietne(r),
+        ]), rows=5),
+    Set("113-kontrolny-4", "Pomiar kontrolny IV", 9, 3, 13, 2, 1225, "kontrolny",
+        lambda r: mieszane(r, [
+            lambda: rownania_dwukrokowe(r),
+            lambda: ulamki_rozne(r),
+            lambda: potegi_dzialania(r),
+            lambda: proporcje(r),
+            lambda: kolejnosc_ujemne(r),
         ]), rows=5),
 ]
 
@@ -914,8 +1160,12 @@ HAND = [
 
 # The chapters, in the order the book prints them. A set's NUMBER is its
 # position in this order, which is why the plan cannot compute one without it.
-BLOCK_TITLES = {1: "Fundament", 2: "Tempo", 3: "Wyzwanie",
-                4: "Łamigłówki", 5: "Pomiary kontrolne"}
+# The difficulty blocks take 1 upwards and the two chapters that are not one
+# take 8 and 9, so a fifth block can be added without moving either of them.
+# Chapter order is this dict's key order, and a set's NUMBER is its position in
+# that order -- which is why gen_plan.py cannot compute one without it.
+BLOCK_TITLES = {1: "Fundament", 2: "Tempo", 3: "Wyzwanie", 4: "Mistrzostwo",
+                8: "Łamigłówki", 9: "Pomiary kontrolne"}
 
 
 class Item(NamedTuple):
@@ -941,7 +1191,7 @@ def book_order() -> list[Item]:
     """
     out, n = [], 0
     for b in sorted(BLOCK_TITLES):
-        pool = HAND if b == 4 else [s for s in SETS if s.block == b]
+        pool = HAND if b == 8 else [s for s in SETS if s.block == b]
         for x in pool:
             n += 1
             out.append(Item(n, x.name, x.title, x.stars,
@@ -1031,7 +1281,7 @@ def main() -> int:
     # silently, with every other gate green.
     lists, order = {}, {i.name: i.num for i in book_order()}
     for b in sorted(BLOCK_TITLES):
-        pool = ([(h.name, f"sets/{h.name}") for h in HAND] if b == 4
+        pool = ([(h.name, f"sets/{h.name}") for h in HAND] if b == 8
                 else [(s.name, f"sets/generated/{s.name}")
                       for s in SETS if s.block == b])
         body = "".join(f"\\btexpect{{{order[n]}}}\\input{{{path}}}\n"

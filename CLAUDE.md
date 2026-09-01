@@ -8,13 +8,13 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 
 | | Done | Remaining |
 |---|---|---|
-| Book (A4) | 88 sets, 3424 exercises, three difficulty blocks, a 13-week plan, front matter, TOC, answer appendix | — |
+| Book (A4) | 113 sets, 4424 exercises, four difficulty blocks, a 17-week plan, front matter, TOC, answer appendix | — |
 | Build | `make book`, six gates, CI on every push and PR, tag-driven release | — |
 | Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
 | Docs | README, `CONTRIBUTING.md`, this file | — |
 
-The book is **86 pages, 88 sets, 3424 exercises, 91 planned days, zero errors,
-zero unresolved references, zero overfull boxes**.
+The book is **108 pages, 113 sets, 4424 exercises, 119 planned days, zero
+errors, zero unresolved references, zero overfull boxes**.
 
 **Re-measure those numbers from the build in front of you.** Page counts and
 the overfull multiset are functions of the layout constants and do not survive
@@ -130,20 +130,58 @@ generated alongside the sets for the reason the include list has always been
 generated.
 
 Fitting the first edition's twenty-five sets into that ladder **renumbered
-them**: what was Zestaw 7 is Zestaw 25. That was safe exactly once and is not
-safe again. It is safe now because no reader can have recorded a time against
-the old numbers -- v1.0.0's release carries no assets at all (#21), so the book
-has never been distributed as a PDF. **From here the list is append-only**: a
-new set goes at the end of its block, and a set that would sit better elsewhere
-stays where it is. The exercises themselves did not move -- all twenty-five
-carried over character for character, seeds untouched, which was checked
+them**: what was Zestaw 7 is Zestaw 25. The exercises themselves did not move --
+all twenty-five carried over character for character, seeds untouched, checked
 against `HEAD` rather than assumed.
+
+**That pass wrote down `from here the list is append-only`, and the rule was
+wrong as stated.** Blok IV had to go after Blok III, and appending to the end
+of a chapter still moves every chapter behind it -- Łamigłówki and the
+benchmarks shifted by twenty-five. There is no ordering of chapters in which
+inserting one does not, because **a set's number IS its position**, which is
+also the only reason the plan can name a set at all and the reason a reader
+thumbing for Zestaw 57 can find it.
+
+So the honest invariant is the one that was always the real one: **a seed is
+permanent, and a number is stable within an edition.** A released PDF is frozen
+and a reader mid-course keeps working from it; a new edition may renumber, and
+`\btexpect` makes sure the plan renumbers with it rather than after it.
+Renumbering for no reason is still churn -- but the rule that forbids it
+outright forbids the fourth month too.
 
 **A set also declares a FAMILY**, which is what it drills. Nothing in the book
 prints it; it is there so a plan can interleave the sets rather than run six
 addition sets on six consecutive days. Blocked practice reads as faster while
 you do it and is worse a week later, which is the same finding this book's
 front matter already carries about rereading.
+
+## The fourth month
+
+Blok IV is not the earlier blocks with wider numbers -- that is what their own
+second and third sets are for. Every set in it asks for a step the ladder
+deliberately kept out: two moves in an equation, a common denominator that has
+to be built rather than read off, a percentage applied twice, an operation
+carried out below zero, an area conversion where the factor is squared.
+
+**Writing the checker's rules for it found two live defects**, both the same
+shape and both in code that ran without complaining. `procent_skladany` and
+`procent_zmiany` applied their rates with integer division, so `100` up 25 and
+then up 10 printed 137 where the arithmetic gives 137.5 -- **a wrong answer
+rather than a rounded one**, since a reader doing it exactly gets a number the
+book says is not the number. Both redraw now instead of rounding.
+
+That is the second time `checkanswers.py` has paid for itself before it ever
+ran: the first was the bare-hyphen minus it found in a shipped set, and this
+time the mere act of writing down what the answer SHOULD be exposed that the
+generator was not computing it. **Write the checker's rule while you write the
+builder, not after.**
+
+**And a question's wording is part of what the drill measures.** The first cut
+of `procent_skladany` printed `1200 o 50% w dół, potem o 25% w górę` -- eleven
+words, forty times. A set of those measures reading speed, which is the one
+thing this book says in its own front matter that it is not measuring. It reads
+`$1\,200$ $-50\%$ $+25\%$` now, in the notation the reader is already doing
+arithmetic in, and it fits three columns where the sentence needed two.
 
 ## The plan, and why it is generated
 
@@ -154,15 +192,18 @@ set that moved -- each of which prints without complaint. A plan that sends the
 reader to Zestaw 41 on a Tuesday is wrong in a way no build can see.
 
 **The schedule stands on three things, none of them invented here.**
-Progressive overload (four weeks of Blok I, five of Blok II, four of Blok III),
+Progressive overload (four weeks of Blok I, five of Blok II, four each of Blok
+III and Blok IV),
 interleaving (no two consecutive days drill the same family), and spacing
 (every day after the first week re-does the set from seven days earlier). The
 front matter says in as many words that these are findings about practice and
 **not** a measurement of this book, because nobody has worked the plan.
 
 **Every seventh day is a benchmark**, and the benchmark sets are the only ones
-in the book with five scoring rows instead of one. One per block rather than
-one for the book: a benchmark is informative over material the reader is
+in the book with five scoring rows instead of two. They are matched to phases
+**by position and not by star rating** -- Blok III's and Blok IV's both carry
+three stars, and keying on that silently handed two phases the same set and
+left one unused. One per block rather than one for the book: a benchmark is informative over material the reader is
 drilling this month, and an easy mixed set re-done in week 13 measures how
 bored they were.
 
@@ -180,6 +221,14 @@ either instead of the other is the same practice, which is why the reversed
 percentage, the difference of squares and remainder-with-quotient are families
 of their own. Getting this wrong does not break anything; it quietly drops a
 skill from the plan.
+
+### Every count on the plan's page is computed
+
+`91 dni, 13 tygodni` was written into the chapter, its title, its running head,
+its contents entry and its own file header. The fourth month made all five
+wrong at once and nothing in the repository could see it -- which is this
+file's own rule about tallies, unapplied in the one place it had not been.
+`gen_plan.py` writes `liczby.tex` and the prose references it.
 
 ### The numbering assertion
 
