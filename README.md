@@ -15,7 +15,7 @@ Zeszyt ćwiczeń na czas: arytmetyka, kolejność działań, procenty, ułamki,
 potęgi, ciągi, zagadki logiczne i triki rachunkowe. **Nie liczy się pojedynczy
 wynik — liczy się ile zadań zrobisz i jak szybko.**
 
-**4424 zadania · 113 zestawów · 108 stron A4** — i gotowy **plan na 17 tygodni**,
+**4424 zadania · 113 zestawów · 110 stron A4** — i gotowy **plan na 17 tygodni**,
 dzień po dniu.
 
 ## Quick start
@@ -82,7 +82,8 @@ kolejność tak, żeby nie była przypadkowa:
   dla którego ta książka istnieje.
 - **Co siódmy dzień pomiar kontrolny** — ten sam zestaw co tydzień, z pięcioma
   wierszami na wynik, więc cztery pomiary widać obok siebie, a nie w czterech
-  miejscach książki.
+  miejscach książki. Do tego **siatka na wykres** — pięć liczb w kolumnie to
+  tabela, pięć punktów na siatce to trend.
 
 ```
 Tydzień 2   Blok I — Fundament
@@ -154,6 +155,24 @@ dlatego, że ktoś go zgadł.
 ├── LICENSE
 └── README.md
 ```
+
+## Druk
+
+Książka jest złożona pod **druk dwustronny** i to zostało zmierzone na gotowym
+PDF-ie, nie założone:
+
+- **Margines na oprawę stoi po wewnętrznej stronie** i odbija się jak trzeba —
+  1,8 cm od grzbietu, 1,5 cm od krawędzi zewnętrznej, na każdej stronie
+  parzystej i nieparzystej. Zamienione stronami zszyłyby się w tekst i nic
+  w buildzie by tego nie zgłosiło.
+- **Rozdziały zaczynają się na nieparzystej.** Kosztuje to kilka pustych
+  stron — są puste celowo i nie niosą ani żywej paginy, ani numeru.
+- **Żaden zestaw nie jest rozbity między strony**, pilnuje tego bramka
+  w buildzie, a odpowiedzi są wszystkie z tyłu, więc zestaw nigdy nie dzieli
+  rozkładówki ze swoimi odpowiedziami.
+
+Drukuj na A4, dwustronnie, **odbicie wzdłuż dłuższej krawędzi**. Zszywka albo
+spirala po lewej.
 
 ## Budowanie
 

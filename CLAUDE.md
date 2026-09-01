@@ -8,12 +8,12 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 
 | | Done | Remaining |
 |---|---|---|
-| Book (A4) | 113 sets, 4424 exercises, four difficulty blocks, a 17-week plan, front matter, TOC, answer appendix | — |
+| Book (A4) | 113 sets, 4424 exercises, four difficulty blocks, a 17-week plan, progress grids, front matter, TOC, answer appendix | — |
 | Build | `make book`, six gates, CI on every push and PR, tag-driven release | — |
 | Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
 | Docs | README, `CONTRIBUTING.md`, this file | — |
 
-The book is **108 pages, 113 sets, 4424 exercises, 119 planned days, zero
+The book is **110 pages, 113 sets, 4424 exercises, 119 planned days, zero
 errors, zero unresolved references, zero overfull boxes**.
 
 **Re-measure those numbers from the build in front of you.** Page counts and
@@ -182,6 +182,27 @@ words, forty times. A set of those measures reading speed, which is the one
 thing this book says in its own front matter that it is not measuring. It reads
 `$1\,200$ $-50\%$ $+25\%$` now, in the notation the reader is already doing
 arithmetic in, and it fits three columns where the sentence needed two.
+
+## Double-sided printing was already right, and nobody had checked
+
+The layout has been duplex-correct since the first edition and it had never
+been verified, which is a different thing from being wrong. Measured on the
+finished PDF with `pdftotext -bbox`: the binding margin is 51.0 pt on the
+inside of **every** page and 42.5 pt on the outside, mirroring correctly across
+recto and verso. Swapped, every printed copy would bind into the text, and
+nothing in the log or in any gate would say so -- the pages would be perfectly
+valid.
+
+The other two properties come free from decisions already made: chapters open
+on a recto, at a cost of six blank pages in a hundred and ten, and the blanks
+carry neither a running head nor a folio because `\cleardoublepage` is patched
+for it. No set can share a spread with its own answers, because every answer is
+in one appendix at the back.
+
+**No gate was added.** This can only break if somebody edits the geometry
+options, and a check that can never realistically fire is the kind this file
+already says to retire rather than write. The measurement is here so the next
+person can re-run it in one command instead of trusting a paragraph.
 
 ## The plan, and why it is generated
 
