@@ -66,6 +66,10 @@ AREA_META = {
         "Mieszane Wyzwania",
         "Prędkość, procenty, geometria, finanse i praca — zadania z życia, "
         "liczone w pamięci."),
+    "6-szybkie-triki": (
+        "Szybkie Triki Liczbowe",
+        "Skróty, które zamieniają rachunek na spostrzeżenie. Tu podpowiedź "
+        "przy odpowiedzi jest ważniejsza niż sam wynik."),
 }
 
 HEADER = """\

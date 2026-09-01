@@ -8,13 +8,13 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 
 | | Done | Remaining |
 |---|---|---|
-| Book (A4, Stroud) | Frame machinery, all 44 exercises, front matter, TOC, chapter frame ranges, difficulty ladder | A sixth area (#13) |
+| Book (A4, Stroud) | Six areas, 52 exercises, front matter, TOC, chapter frame ranges, difficulty ladder | — |
 | Build | `make book`, three gates, CI on every push and PR, tag-driven release | — |
 | Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
 | Docs | README, `CONTRIBUTING.md`, this file | — |
 
-The book is **23 pages, 49 frames, zero errors, zero unresolved references,
-zero overfull boxes**, with all 49 margin badges in the correct outer margin.
+The book is **26 pages, 58 frames, zero errors, zero unresolved references,
+zero overfull boxes**, with all 58 margin badges in the correct outer margin.
 Every area carries at least two one-star exercises and at least eight in total.
 
 **Re-measure those numbers from the build in front of you.** Page counts and
@@ -170,9 +170,7 @@ overfull multiset rather than carrying the old ones across.
 
 ## Open decisions, not to be re-litigated from a search result
 
-- **#13 — a sixth area**, authored in `areas/`, shipped as v2.0.0.
-
-Two decisions are CLOSED and should not be re-litigated from a search result:
+Three decisions are CLOSED and should not be re-litigated from a search result:
 
 - **#16 — the book is what this repository publishes.** The deck is archived
   under `deck-archive/` and not built. It never built: its only CI run failed
@@ -180,3 +178,8 @@ Two decisions are CLOSED and should not be re-litigated from a search result:
   source for the reason given above.
 - **#8 — the title carries no year.** `BrainTrain 2025` read as abandoned in
   late 2026. Adding a year back is one line in three places if that changes.
+- **#13 — the sixth area is *Szybkie Triki Liczbowe*.** *Pamięć* was the other
+  serious candidate and was rejected on a structural ground worth keeping: this
+  format cannot hide what is above the reader's hand, so a memory exercise can
+  always be re-read rather than recalled. The format fights that area; it does
+  not fight shortcuts.
