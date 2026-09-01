@@ -6,7 +6,7 @@
 #  #16 is decided -- the book is what this repository publishes. The Beamer
 #  deck is archived under deck-archive/ and is not built; it never built (#21).
 #
-#  The unit is a SET: ~30 exercises on a page, timed and scored as a whole,
+#  The unit is a SET: a run of exercises on a page, timed and scored as a whole,
 #  with every answer in one appendix at the back. Arithmetic sets are generated
 #  by tools/gen_sets.py -- the book is scored on volume, and hundreds of
 #  hand-written sums is where arithmetic slips hide. Hand-written sets (logic,

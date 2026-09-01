@@ -15,7 +15,7 @@ Zeszyt ćwiczeń na czas: arytmetyka, kolejność działań, procenty, ciągi,
 zagadki logiczne i triki rachunkowe. **Nie liczy się pojedynczy wynik — liczy
 się ile zadań zrobisz i jak szybko.**
 
-**434 zadania · 18 zestawów · 16 stron A4.**
+**1064 zadań · 29 zestawów · 27 stron A4.**
 
 ## Quick start
 
@@ -30,21 +30,26 @@ Potrzebujesz `pdflatex`, `latexmk` i `python3`. Gotowy PDF powstaje jako
 
 ## Jak działa format
 
-Zadania są zebrane w **zestawy** — po 24--30 na stronie, jedno pod drugim.
-Zestaw robisz w całości, na stoper, i notujesz czas oraz wynik pod spodem.
-**Wszystkie odpowiedzi są na końcu książki**, nigdy obok zadania.
+Zadania są zebrane w **zestawy** — jedno pod drugim, po 40 w każdym zestawie
+rachunkowym. Zestaw robisz w całości, na stoper, i notujesz czas oraz wynik pod
+spodem. **Wszystkie odpowiedzi są na końcu książki**, nigdy obok zadania.
 
 ```
-ZESTAW 1   Dodawanie dwucyfrowe              ★☆☆   ⏱ cel: 2:30
+ZESTAW 1   Dodawanie dwucyfrowe              ★☆☆   ⏱ cel: 3:20
 ─────────────────────────────────────────────────────────────────
-  1. 18 + 36  ____     11. 75 + 89  ____     21. 55 + 32  ____
-  2. 22 + 82  ____     12. 30 + 13  ____     22. 62 + 15  ____
-  3. 59 + 31  ____     13. 83 + 23  ____     23. 30 + 23  ____
+  1. 18 + 36  ____     15. 75 + 89  ____     28. 55 + 32  ____
+  2. 22 + 82  ____     16. 30 + 13  ____     29. 62 + 15  ____
+  3. 59 + 31  ____     17. 83 + 23  ____     30. 30 + 23  ____
   ...                  ...                   ...
- 10. 89 + 35  ____     20. 22 + 50  ____     30. 15 + 18  ____
+ 14. 89 + 35  ____     27. 22 + 50  ____     40. 15 + 18  ____
 ─────────────────────────────────────────────────────────────────
-Czas: ________   Poprawne: ____ / 30   Data: ________
+Czas: ________   Poprawne: ____ / 40   Data: ________
 ```
+
+Każdy zestaw rachunkowy ma tyle samo zadań, bo dwa czasy da się porównać tylko
+wtedy, gdy mierzą tę samą pracę. Zestaw nigdy nie jest rozbity między strony —
+rubryka z czasem stoi pod zadaniami, które opisuje, i pilnuje tego bramka
+w buildzie.
 
 Rubryka na datę jest tam celowo: jeden pomiar nie mówi nic. Wracasz do tego
 samego zestawu za tydzień i porównujesz — ten sam zestaw, krótszy czas, mniej
@@ -74,7 +79,7 @@ Gwiazdki opisują **zestaw**, nie pojedyncze zadanie:
 │       ├── 21-ciagi.tex              #   wyzwania, triki — tego się nie generuje
 │       ├── 22-mieszane.tex
 │       ├── 23-triki.tex
-│       └── generated/                # GENEROWANE (make sets) — 14 zestawów rachunków
+│       └── generated/                # GENEROWANE (make sets) — zestawy rachunków
 ├── tools/
 │   ├── gen_sets.py                   # Generator zestawów + bramka drift
 │   └── checklog.py                   # Bramka logu (nie kod wyjścia!)
@@ -110,6 +115,12 @@ Trzy bramki, każda sprawdza coś, czego pozostałe nie widzą:
   poprawne, więc reszta bramek świeci na zielono. Ta sama bramka pilnuje listy
   `\input`-ów: zestaw dodany do generatora i zapomniany w liście to zestaw,
   którego nikt nigdy nie zobaczy.
+
+Trzecia bramka siedzi w preambule, nie w `tools/`: każdy zestaw ma etykietę
+w nagłówku i w stopce, a build **przerywa się błędem**, jeśli obie wypadną na
+różnych stronach. Zestaw rozbity między strony to rubryka z czasem po drugiej
+stronie kartki niż zadania, które ocenia — a ta rubryka jest w tej książce
+najważniejsza.
 
 Generator liczy odpowiedzi tym samym kodem, który układa zadania, więc
 wydrukowana odpowiedź nie może nie zgadzać się ze swoim zadaniem.

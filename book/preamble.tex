@@ -3,9 +3,12 @@
 %
 %  THE UNIT IS A SET, NOT AN EXERCISE.
 %
-%  A set is a page of ~30 exercises listed one under another, done against a
+%  A set is a run of exercises listed one under another, done against a
 %  stopwatch and scored as a whole. Answers live in one appendix at the BACK of
-%  the book, never beside the exercise.
+%  the book, never beside the exercise. How many exercises that is belongs to
+%  tools/gen_sets.py, which holds it in one constant: two sets a reader times
+%  against each other have to be the same length or the two numbers mean
+%  nothing.
 %
 %  This is a deliberate replacement of an earlier design that gave each
 %  exercise its own frame, with the answer opening the next one. That design is
@@ -29,10 +32,10 @@
 \usepackage{amssymb}
 \usepackage{etoolbox}
 \usepackage{xcolor}
-\usepackage{multicol}
 \usepackage{tikz}
 \usepackage{fontawesome5}
 \usepackage{fancyhdr}
+\usepackage{refcount}
 \usepackage[hidelinks]{hyperref}
 
 % ------------------------------------------------------------
@@ -95,8 +98,8 @@
 % ------------------------------------------------------------
 % A number, the problem, and a rule to write on. That is the whole element.
 % There is no difficulty star and no per-exercise timer: both are properties of
-% the SET, printed once at its head, and repeating them thirty times a page
-% would be noise that costs exercises.
+% the SET, printed once at its head, and repeating them on every line would be
+% noise that costs exercises.
 %
 % \strut so rows keep an even pitch whether or not the problem has a fraction
 % or an exponent in it -- a column of drill lines that breathes unevenly is
@@ -129,6 +132,50 @@
 }
 
 % ------------------------------------------------------------
+%  Columns, and why they are not multicol's
+% ------------------------------------------------------------
+% A set is laid out as one row of minipages, and the generator says where the
+% column breaks fall. multicol did this until the sets grew to forty, and it
+% cannot do the one thing this format needs: A SET MUST NOT BE SPLIT.
+%
+% multicols cannot be put in a box -- it says so and refuses -- so a set built
+% with it is always breakable, and at forty exercises the breaks started
+% landing between the last exercise and the Czas/Poprawne/Data box. A scoring
+% box on the far side of a page turn from the run it scores is the one thing
+% this book cannot ship: that box is the product.
+%
+% A row of minipages is a single horizontal box. It cannot be broken, so the
+% set moves to the next page whole or not at all, and the \nobreak either side
+% keeps the head and the foot with it. Two other things come free: the split is
+% balanced exactly (14/13/13, where multicol gave 14/14/12 under
+% \raggedcolumns), and a set too tall for a page is now an overfull \vbox the
+% gate reports rather than a silent split nobody sees.
+\newlength{\btcolsep}
+\setlength{\btcolsep}{1.2em}
+\newlength{\btcolwidth}
+\newlength{\btcoltmp}
+
+% \btnc -- column break. Emitted by tools/gen_sets.py between the counts
+% split() computes; written by hand in the sets under book/sets/.
+% \end followed by \begin of the SAME environment inside one macro is balanced
+% as far as LaTeX's environment checking is concerned.
+\newcommand{\btnc}{%
+  \end{minipage}\hspace{\btcolsep}\begin{minipage}[t]{\btcolwidth}%
+}
+
+% Set \btcolwidth for #1 columns. Done with \multiply and \divide on the
+% registers rather than one \dimexpr: the expression needs a nested \numexpr
+% for #1-1 and reads worse than the four lines it saves.
+\newcommand{\btsetcolwidth}[1]{%
+  \setlength{\btcolwidth}{\btcolsep}%
+  \multiply\btcolwidth by \numexpr#1-1\relax
+  \setlength{\btcoltmp}{\linewidth}%
+  \addtolength{\btcoltmp}{-\btcolwidth}%
+  \setlength{\btcolwidth}{\btcoltmp}%
+  \divide\btcolwidth by #1\relax
+}
+
+% ------------------------------------------------------------
 %  The set
 % ------------------------------------------------------------
 % \begin{zestaw}{title}{stars}{target time}{columns}
@@ -145,37 +192,69 @@
   \fi
 }
 
+% EVERY \vspace HERE IS PRECEDED BY \nobreak, and that is the whole point.
+% `\par\vspace{4pt}` puts glue straight after a line box, which is a legal
+% breakpoint, and the page-breaker took it: the Czas/Poprawne/Data line came
+% out at the top of the next page with the rule that belongs above it left
+% behind on the previous one. A penalty before the glue is what makes the box
+% one piece -- the grid above it is already a single unbreakable box, so with
+% this the whole set moves as a unit.
 \newcommand{\btsetfoot}{%
-  \par\vspace{6pt}%
-  \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\vspace{4pt}%
+  \par\nobreak\vspace{6pt}%
+  \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\nobreak\vspace{4pt}%
   \noindent
-  {\bfseries Czas:}~\rule[-0.4ex]{6em}{0.4pt}\hfill
+  {\bfseries Czas:}~\label{btsetfoot\thezestaw}\rule[-0.4ex]{6em}{0.4pt}\hfill
   {\bfseries Poprawne:}~\rule[-0.4ex]{3em}{0.4pt}\,/\,\thezad\hfill
   {\bfseries Data:}~\rule[-0.4ex]{6em}{0.4pt}%
   \par
+}
+
+% A SET THAT IS SPLIT IS A BUILD FAILURE, not something to catch by eye.
+%
+% The layout above is built so a set moves whole, but "built so it cannot
+% happen" is what was believed about the version that shipped a scoring box on
+% the wrong side of a page turn. This measures it instead: the head and the
+% foot each carry a label, and if the two pages differ the run stops with an
+% error that tools/checklog.py counts.
+%
+% \getpagerefnumber gives 0 for a label that does not exist yet, which is every
+% label on the first pass -- the comparison waits for a pass that has an .aux.
+\newcommand{\btwholecheck}{%
+  \edef\btheadpg{\getpagerefnumber{btsethead\thezestaw}}%
+  \edef\btfootpg{\getpagerefnumber{btsetfoot\thezestaw}}%
+  \ifnum\btheadpg>0
+    \ifnum\btheadpg=\btfootpg\else
+      \PackageError{trening-mozgu}{%
+        Zestaw \thezestaw\space is split: head on page \btheadpg,
+        foot on page \btfootpg}{%
+        A set is timed and scored as one run, so it has to sit on one page.
+        Shorten it, give it more columns, or make the page taller}%
+    \fi
+  \fi
 }
 
 \newenvironment{zestaw}[4]{%
   \refstepcounter{zestaw}%
   \par\addvspace{10pt}%
   % Head
-  \noindent\textcolor{btink}{\rule{\linewidth}{1.2pt}}\par\vspace{3pt}%
+  \noindent\textcolor{btink}{\rule{\linewidth}{1.2pt}}\par\nobreak\vspace{3pt}%
   \noindent
-  {\large\bfseries ZESTAW \thezestaw}\quad{\large #1}%
+  {\large\bfseries ZESTAW \thezestaw}\label{btsethead\thezestaw}\quad{\large #1}%
   \hfill \DifficultyStars{#2}\quad
   \tikz[baseline=(b.base)]{\node[fill=black!8, rounded corners=3pt,
     inner xsep=5pt, inner ysep=2.5pt, outer sep=0pt,
     font=\small\bfseries] (b) {\faClock[regular]\ cel: #3};}%
-  \par\vspace{2pt}%
-  \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\vspace{7pt}%
+  \par\nobreak\vspace{2pt}%
+  \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\nobreak\vspace{7pt}%
   \addcontentsline{toc}{section}{Zestaw \thezestaw\ --- #1}%
-  % multicol warns at one column, and it is right to: a one-column set is just
-  % a list. The wide sets (word puzzles, long prompts) are exactly that.
-  \def\btcols{#4}%
-  \ifnum#4>1 \begin{multicols}{#4}\raggedcolumns \fi
+  \btsetcolwidth{#4}%
+  \nobreak
+  \noindent\begin{minipage}[t]{\btcolwidth}%
 }{%
-  \ifnum\btcols>1 \end{multicols}\fi
+  \end{minipage}%
+  \par\nobreak
   \btsetfoot
+  \btwholecheck
 }
 
 % ------------------------------------------------------------
@@ -195,9 +274,16 @@
   \loop\ifnum\value{btansi}<\value{zestaw}%
     \stepcounter{btansi}%
     \ifcsdef{btans@\thebtansi}{%
+      % One block per set, in a box so it cannot split. A page that begins in
+      % the middle of a list begins with numbers and no heading, and the
+      % appendix is a lookup table -- a row you cannot see the label of is a
+      % row you have to leave the page to identify. A block is a few lines
+      % long, so keeping it whole costs nothing.
       \par\addvspace{7pt}%
-      {\bfseries\color{btink}Zestaw \thebtansi}\par\vspace{1pt}%
-      \csuse{btans@\thebtansi}\par
+      \noindent\begin{minipage}{\linewidth}%
+        {\bfseries\color{btink}Zestaw \thebtansi}\par\nobreak\vspace{1pt}%
+        \csuse{btans@\thebtansi}\par
+      \end{minipage}\par
     }{}%
   \repeat
 }
