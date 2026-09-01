@@ -39,12 +39,15 @@ ramkę następną — zakrywasz stronę dłonią, liczysz na czas, czytasz dalej
 
 ```bash
 make book     # zbuduj książkę i sprawdź log
+make convert  # przenieś areas/ do book/chapters/
 make help     # pozostałe cele
 ```
 
-Szkielet (`book/`) zawiera na razie jeden rozdział z trzema zadaniami; pozostałe
-35 zadań przenosi [#17](https://github.com/konradcinkusz/brain-train/issues/17).
-Całość opisuje [#14](https://github.com/konradcinkusz/brain-train/issues/14).
+Wszystkie **38 zadań** z pięciu obszarów są już w książce (`book/`, 18 stron).
+Rozdziały w `book/chapters/` są **generowane** z `areas/` przez
+`tools/convert_deck.py` — edytuj `areas/` i uruchom `make convert`; `make book`
+sprawdza, czy nie rozjechały się z sobą. Całość opisuje
+[#14](https://github.com/konradcinkusz/brain-train/issues/14).
 
 > `make book` nie ufa kodowi wyjścia `latexmk`: przy `nonstopmode` nieudany
 > przebieg i tak zapisuje PDF, a przy `-file-line-error` linia błędu zaczyna się

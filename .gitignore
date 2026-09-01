@@ -56,3 +56,7 @@ ehthumbs.db
 build/
 _build/
 out/
+
+# Python
+__pycache__/
+*.py[cod]

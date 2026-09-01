@@ -22,7 +22,7 @@ BOOKLOG   := $(BOOKDIR)/$(BOOKMAIN).log
 BOOKPDF   := $(BOOKDIR)/$(BOOKMAIN).pdf
 LATEXMK   := latexmk -pdf -interaction=nonstopmode -file-line-error
 
-.PHONY: all book book-only check deck clean help
+.PHONY: all book book-only check drift convert deck clean help
 
 all: book
 
@@ -34,9 +34,25 @@ book-only:
 	cd $(BOOKDIR) && $(LATEXMK) $(BOOKMAIN).tex || true
 
 ## check: read the log properly -- NOT `grep '^!'`, NOT the exit code
-check:
+check: drift
 	python3 tools/checklog.py $(BOOKLOG)
 	python3 tools/checkbadges.py $(BOOKPDF)
+
+## drift: book/chapters/ must match areas/ -- they are generated from it
+#
+# The promise is exactly as wide as the gate: without this, an exercise edited
+# in areas/ and never re-converted leaves the book quietly showing the old one,
+# and every other check stays green because both files are individually valid.
+#
+# This gate is correct only while BOTH formats exist. If #16 decides the book
+# replaces the deck, areas/ stops being the source and this target goes with
+# it -- do not leave it here comparing the book against a frozen copy.
+drift:
+	python3 tools/convert_deck.py --check
+
+## convert: regenerate book/chapters/ from areas/
+convert:
+	python3 tools/convert_deck.py
 
 ## deck: build the original Beamer deck (XeLaTeX)
 deck:
