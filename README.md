@@ -9,6 +9,7 @@
 [![Commity](https://flat.badgen.net/github/commits/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/commits/main "Commity")
 [![Zgłoszenia](https://flat.badgen.net/github/issues/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/issues "Zgłoszenia")
 [![Pull requesty](https://flat.badgen.net/github/prs/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/pulls "Pull requesty")
+[![Wydanie](https://flat.badgen.net/github/release/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/releases/latest "Najnowsze wydanie")
 [![Build book](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml/badge.svg)](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml "Build book")
 
 Zeszyt ćwiczeń na czas: arytmetyka, kolejność działań, procenty, ułamki,
@@ -17,6 +18,11 @@ wynik — liczy się ile zadań zrobisz i jak szybko.**
 
 **4424 zadania · 113 zestawów · 110 stron A4** — i gotowy **plan na 17 tygodni**,
 dzień po dniu.
+
+### [⬇ Pobierz PDF](https://github.com/konradcinkusz/brain-train/releases/latest/download/trening-mozgu-a4.pdf)
+
+Gotowa książka z najnowszego wydania — bez LaTeX-a, bez budowania. A4, do druku
+dwustronnego.
 
 ## Quick start
 
@@ -240,18 +246,26 @@ ma autora. Te siedzą w `book/sets/` i pisze się je ręcznie.
 
 ## Wydanie PDF
 
-Wypchnij tag `v*` lub `V*`, aby zbudować książkę i dołączyć
-`trening-mozgu-a4.pdf` do wydania:
+Dwie drogi, obie kończą się tym samym: zbudowaną książką załączoną do wydania.
+
+**Tag.** Wypchnij `v*` lub `V*`:
 
 ```bash
 git tag v2.0.0
 git push origin v2.0.0
 ```
 
+**Albo bez lokalnego klona:** *Actions → Release book PDF → Run workflow*, wersja
+w polu `version`. Workflow tworzy tag sam, swoim tokenem
+([#35](https://github.com/konradcinkusz/brain-train/pull/35)).
+
 Wydanie powstaje tylko wtedy, gdy build przejdzie wszystkie bramki — job wydania
 deklaruje `needs: build`, więc inaczej w ogóle się nie uruchamia. To celowe:
 wydanie `v1.0.0` nie ma załączonego PDF-a, bo jego build się nie powiódł, a nikt
 tego nie zauważył ([#21](https://github.com/konradcinkusz/brain-train/issues/21)).
+
+**Wydanie sprawdza się po załącznikach, nie po zielonym workflow.** `v1.0.0`
+jest tego przykładem: istnieje, nie jest szkicem i nie niesie niczego.
 
 ## Wkład
 

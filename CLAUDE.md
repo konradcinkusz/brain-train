@@ -476,6 +476,16 @@ step is `fail_on_unmatched_files`, and a `test -s` stands between them.
 v1.0.0 is the worked example of why — it exists, it is not a draft, and it
 carries nothing.
 
+**v2.0.0 was verified that way and went one step further**, because an empty
+release is only the loudest version of the defect: a stale or truncated PDF
+would pass an assets check and fail a reader. The asset was downloaded, its
+sha256 compared against the digest GitHub recorded, and the file opened —
+`Trening Mózgu`, 110 pages, six chapters, up to Zestaw 113, the same page count
+as the build here. **The release job's green tick was not the evidence.** Note
+also that the release itself was created in the UI a few seconds BEFORE the
+workflow ran, so for two minutes it existed with no asset at all: a check run
+in that window would have reported exactly what v1.0.0 looks like.
+
 ## Build
 
 ```bash
