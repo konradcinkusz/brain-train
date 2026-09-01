@@ -1,14 +1,16 @@
 # ============================================================
 #  Trening Mózgu
 #
-#  Two artifacts live in this repository while the book is being ported
-#  (issue #14):
+#  ONE artifact: the Stroud A4 book, pdfLaTeX, book/main-pl-a4.tex.
 #
-#    book   -- the Stroud A4 book, pdfLaTeX, book/main-pl-a4.tex
-#    deck   -- the original Beamer deck, XeLaTeX, main.tex
+#  #16 is decided -- the book is what this repository publishes. The Beamer
+#  deck is archived under deck-archive/ and is not built; it never built (#21).
 #
-#  Which of the two is the source of truth is issue #16 and is NOT decided
-#  here; until it is, both build and neither is generated from the other.
+#  areas/ is still the AUTHORING source and book/chapters/ is generated from
+#  it, and that is not leftover plumbing: in areas/ an exercise sits next to
+#  ITS OWN answer, while in the book the answer belongs to the PREVIOUS frame.
+#  Authoring straight into the book format means offsetting every answer by one
+#  by hand, which is exactly the mistake convert_deck.py exists to prevent.
 #
 #  NOTE ON THE GATE. `book` runs tools/checklog.py and fails on what it finds.
 #  latexmk's own exit code is not sufficient: under -interaction=nonstopmode a
@@ -22,7 +24,7 @@ BOOKLOG   := $(BOOKDIR)/$(BOOKMAIN).log
 BOOKPDF   := $(BOOKDIR)/$(BOOKMAIN).pdf
 LATEXMK   := latexmk -pdf -interaction=nonstopmode -file-line-error
 
-.PHONY: all book book-only check drift convert deck clean help
+.PHONY: all book book-only check drift convert clean help
 
 all: book
 
@@ -44,9 +46,11 @@ check: drift
 # in areas/ and never re-converted leaves the book quietly showing the old one,
 # and every other check stays green because both files are individually valid.
 #
-# This gate is correct only while BOTH formats exist. If #16 decides the book
-# replaces the deck, areas/ stops being the source and this target goes with
-# it -- do not leave it here comparing the book against a frozen copy.
+# #16 is decided and this gate SURVIVES it. The deck is retired, but areas/ is
+# still where exercises are authored, for the reason in the header: the answer
+# shift is a presentation detail and doing it by hand is the error this gate
+# and the converter exist to prevent. What changed is the reason -- it is no
+# longer bridging two outputs, it is guarding one generation step.
 drift:
 	python3 tools/convert_deck.py --check
 
@@ -54,14 +58,9 @@ drift:
 convert:
 	python3 tools/convert_deck.py
 
-## deck: build the original Beamer deck (XeLaTeX)
-deck:
-	latexmk -xelatex -interaction=nonstopmode -file-line-error main.tex
-
-## clean: remove build artifacts from both builds
+## clean: remove build artifacts
 clean:
 	cd $(BOOKDIR) && latexmk -C $(BOOKMAIN).tex 2>/dev/null || true
-	latexmk -C main.tex 2>/dev/null || true
 	rm -f $(BOOKDIR)/*.aux $(BOOKDIR)/chapters/*.aux $(BOOKDIR)/frontmatter/*.aux
 
 ## help: list targets

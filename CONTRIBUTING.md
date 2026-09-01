@@ -9,6 +9,11 @@ formatu i przeszły bramki.
 
 **Edytuj `areas/`, nigdy `book/chapters/`.**
 
+Powód nie jest formalny. W `areas/` zadanie stoi obok **swojej** odpowiedzi —
+tak się o zadaniu myśli. W książce odpowiedź otwiera ramkę *następną*, więc
+leży przy zadaniu **kolejnym**. Pisząc wprost w książce, musiałbyś przesuwać
+każdą odpowiedź o jedno miejsce ręcznie.
+
 `book/chapters/*.tex` jest **generowane** przez `tools/convert_deck.py` i
 nadpisywane przy każdym `make convert`. Zmiana zrobiona tam znika po pierwszej
 regeneracji, a `make drift` i tak zgłosi rozjazd.
@@ -22,7 +27,10 @@ book/chapters/3-zagadki-logiczne.tex   ← generowane, nie dotykaj
 
 ## Jak wygląda zadanie
 
-Para makr: zadanie i odpowiedź do niego.
+Para makr: zadanie i odpowiedź do niego. Nazwy pochodzą z prezentacji Beamer,
+od której zaczęło się repozytorium — prezentacja jest zarchiwizowana
+(`deck-archive/`), ale format treści został, bo jest wygodny i bo dzięki temu
+zadania nadal dają się w razie czego złożyć tamtym szablonem.
 
 ```latex
 % -- 19 --
