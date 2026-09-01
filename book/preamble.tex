@@ -469,17 +469,52 @@
 % week's heading at the foot of one page and its seven days on the next.
 \newcommand{\btline}[1]{\rule[-0.4ex]{#1}{0.4pt}}
 
-\newcommand{\btweek}[2]{%
+% \btrubryka is the heading; \btweek is it with the word Tydzień in front.
+% The two exist separately because the plan ends with a block that is not a
+% week -- and `Tydzień Zapas` is not a heading, it is a bug that reads like
+% one.
+\newcommand{\btrubryka}[2]{%
   \par\addvspace{11pt}%
-  \noindent{\bfseries\color{btink}Tydzień #1}\quad
+  \noindent{\bfseries\color{btink}#1}\quad
   {\small\color{btgrey}#2}%
   \par\nobreak\vspace{2pt}%
   \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\nobreak\vspace{4pt}%
   \nobreak
 }
+\newcommand{\btweek}[2]{\btrubryka{Tydzień #1}{#2}}
 
 \newcommand{\btplanhead}{%
   {\footnotesize\bfseries Dzień} & {\footnotesize\bfseries Zestaw dnia}
   & {\footnotesize\bfseries Cel} & {\footnotesize\bfseries Powt.}
   & {\footnotesize\bfseries Data} & {\footnotesize\bfseries Czas}
   & {\footnotesize\bfseries Poprawne} \\[3pt]}
+
+% ------------------------------------------------------------
+%  The progress grid
+% ------------------------------------------------------------
+% One per benchmark set. Five numbers in a column is a table; five points on a
+% grid is a trend, and the difference is the whole reason the benchmark sets
+% exist at all.
+%
+% THE Y AXIS CARRIES NO NUMBERS, and that is not laziness. One reader's first
+% measurement is four minutes and another's is eleven, so any printed scale is
+% wrong for both -- and a scale chosen by the book would also choose how large
+% an improvement looks. The reader writes their own against the rules on the
+% left, which scales the axis to their range.
+\newcommand{\btsiatka}[2]{%
+  \begin{minipage}[t]{0.47\linewidth}%
+    {\bfseries\color{btink}#2}\hfill{\small\color{btgrey}Zestaw #1}%
+    \par\vspace{4pt}%
+    \begin{tikzpicture}[x=1.05cm, y=0.5cm]
+      \draw[btrule, very thin] (0,0) grid (5,8);
+      \draw[btink, thick] (0,0) -- (0,8);
+      \draw[btink, thick] (0,0) -- (5,0);
+      \foreach \i in {1,...,5}
+        \node[below, font=\footnotesize\color{btgrey}] at (\i-0.5, 0) {\i};
+      \foreach \j in {1,...,8}
+        \node[left, inner xsep=2pt] at (0,\j) {\rule{1.4em}{0.3pt}};
+    \end{tikzpicture}%
+    \par\vspace{2pt}%
+    {\footnotesize\color{btgrey}pomiar\hfill czas w dół to postęp}%
+  \end{minipage}%
+}
