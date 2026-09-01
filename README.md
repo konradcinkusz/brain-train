@@ -31,6 +31,26 @@ latexmk -xelatex main.tex
 └── README.md
 ```
 
+## Książka (w budowie)
+
+Zbiór jest przenoszony do formatu **książki A4** w układzie Stroudowskim: jedno
+zadanie na ramkę, numer ramki na zewnętrznym marginesie, odpowiedź otwiera
+ramkę następną — zakrywasz stronę dłonią, liczysz na czas, czytasz dalej.
+
+```bash
+make book     # zbuduj książkę i sprawdź log
+make help     # pozostałe cele
+```
+
+Szkielet (`book/`) zawiera na razie jeden rozdział z trzema zadaniami; pozostałe
+35 zadań przenosi [#17](https://github.com/konradcinkusz/brain-train/issues/17).
+Całość opisuje [#14](https://github.com/konradcinkusz/brain-train/issues/14).
+
+> `make book` nie ufa kodowi wyjścia `latexmk`: przy `nonstopmode` nieudany
+> przebieg i tak zapisuje PDF, a przy `-file-line-error` linia błędu zaczyna się
+> od ścieżki, więc `grep '^!'` też jej nie widzi. Bramką jest
+> `tools/checklog.py`.
+
 ## Poziomy trudności
 
 | Gwiazdki | Poziom | Czas docelowy |
