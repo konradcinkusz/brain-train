@@ -1,30 +1,23 @@
 % ============================================================
 %  Trening Mózgu -- book preamble
 %
-%  The Stroud frame machinery: a hairline between frames, the frame number in
-%  the OUTER margin, and each answer opening the frame after the exercise it
-%  answers, so the reader covers the page below, works against the stopwatch,
-%  then reads on.
+%  THE UNIT IS A SET, NOT AN EXERCISE.
 %
-%  PROVENANCE. The frame environment, the margin badge, the frame rule and its
-%  spacing, the running heads and the geometry assertion are ported from
-%  konradcinkusz/math-for-ai-engineers (preamble.tex), whose code is MIT
-%  licensed. Only that book's prose is CC BY-NC-SA; none of it is here. Where a
-%  decision there was measured rather than chosen, the measurement is carried
-%  across with it -- those comments are the reason the numbers are what they
-%  are, and deleting them turns a measured constant back into a guess.
+%  A set is a page of ~30 exercises listed one under another, done against a
+%  stopwatch and scored as a whole. Answers live in one appendix at the BACK of
+%  the book, never beside the exercise.
 %
-%  WHAT WAS DELIBERATELY NOT PORTED, and why. This book is one language, so
-%  there is no parity tooling and no lang/ catalogue. Its numbers are mental
-%  arithmetic the reader is meant to do, so there is no computed-value pipeline
-%  -- that standard's own rule exempts "anything the reader can do in their
-%  head", which is this whole book. No Mermaid, no quiz/outcomes machinery, no
-%  admonition vocabulary: an exercise book has frames and answers and needs no
-%  more.
+%  This is a deliberate replacement of an earlier design that gave each
+%  exercise its own frame, with the answer opening the next one. That design is
+%  right for programmed instruction, where the point is to LEARN a step. It is
+%  wrong here: this book drills, and what it measures is how many you get
+%  through and how fast. One exercise per frame put two on a page, made the
+%  page ceremony rather than work, and put the answer where it interrupts the
+%  run. Nothing about it is kept.
 %
-%  Engine: pdfLaTeX. Do NOT load newtx here. The source repository probes for
-%  it and degrades, which is what made its TS1 font map a trap on a machine
-%  that has the fonts half-installed; this preamble simply never asks.
+%  Engine: pdfLaTeX. Do NOT load newtx -- the companion repository probes for
+%  it and degrades, which made its TS1 font map a trap on a half-installed
+%  machine. This preamble simply never asks.
 % ============================================================
 
 \usepackage[T1]{fontenc}
@@ -36,7 +29,7 @@
 \usepackage{amssymb}
 \usepackage{etoolbox}
 \usepackage{xcolor}
-\usepackage[most]{tcolorbox}
+\usepackage{multicol}
 \usepackage{tikz}
 \usepackage{fontawesome5}
 \usepackage{fancyhdr}
@@ -45,243 +38,105 @@
 % ------------------------------------------------------------
 %  Paper
 % ------------------------------------------------------------
-% A4 at 12pt: the format this book is read in -- on a screen, or printed on an
-% office printer, where a trade-sized page lands in the middle of an A4 sheet
-% surrounded by white.
-%
-% A second paper size would go here, selected on a \bookpaper switch set by the
-% main file, exactly as the source repository does it. It is not written yet
-% because nothing needs it: adding one means adding the branch AND rebuilding
-% every page-level measurement, since a format change moves every page
-% boundary. Do not add the branch speculatively.
-%
-% head=26pt is set THROUGH geometry and not by \setlength{\headheight}
-% afterwards, or the text block moves under fancyhdr.
+% A4 at 11pt. Margins are TIGHTER than a prose book's on purpose: the page is a
+% worksheet, and every millimetre of margin is an exercise that did not fit.
+% There is no outer-margin furniture any more, so nothing needs room out there.
 \usepackage[
   a4paper,
-  inner=3.4cm, outer=2.8cm, top=2.6cm, bottom=3.0cm,
-  head=26pt, headsep=0.8cm, footskip=1.4cm,
-  marginparsep=6pt, marginparwidth=1.5cm
+  inner=1.8cm, outer=1.5cm, top=1.8cm, bottom=1.6cm,
+  head=24pt, headsep=0.5cm, footskip=0.9cm
 ]{geometry}
 
-% The margin box must fit the NARROWER of the two outer margins, and it must
-% fail loudly when it does not: a badge sliced off at the trim produces a green
-% log and a mutilated page. Hard error, not a warning -- and not geometry's own
-% overrun warning, which is only emitted under [verbose] and so would say
-% nothing here.
-\makeatletter
-\AtBeginDocument{%
-  \begingroup
-  \@tempdima=\marginparwidth \advance\@tempdima\marginparsep
-  \@tempdimb=\paperwidth \advance\@tempdimb-\textwidth
-  \advance\@tempdimb-1in \advance\@tempdimb-\oddsidemargin   % recto outer
-  \@tempdimc=1in \advance\@tempdimc\evensidemargin           % verso outer
-  \ifdim\@tempdimb<\@tempdimc \@tempdimc=\@tempdimb \fi
-  \ifdim\@tempdima>\@tempdimc
-    \PackageError{braintrain}{The frame badge does not fit the outer margin}%
-      {marginparwidth+marginparsep is \the\@tempdima; the narrower outer
-       margin is \the\@tempdimc. Reduce marginparwidth in book/preamble.tex.}%
-  \fi
-  \endgroup
-}
-\makeatother
-
-% marginnote, never \marginpar. \marginpar goes through the float mechanism,
-% takes at most one note per line and defers the rest ("Marginpar on page N
-% moved"); at the four to eight frames per page this book runs, that is the
-% normal case rather than an edge case, and a badge that has moved down the
-% page no longer names the frame it belongs to -- the one thing the element is
-% for.
-%
-% [noadjust] is load-bearing. Under the default, marginnote emits a \strut into
-% the line it was called from, giving the frame rule's line the height and
-% depth of a text line; that is invisible until the next item is tall enough to
-% clamp the interline glue, and \ans opens a tcolorbox immediately after the
-% rule in nearly every frame here.
-%
-% Nothing in this file may set \reversemarginpar: marginnote honours it and
-% would silently move every badge to the INNER margin.
-\usepackage[quiet,noadjust]{marginnote}
-
 % ------------------------------------------------------------
-%  Colours -- brain-train's own palette, from mybraintrainer.cls
+%  Colours -- carried over from the archived deck
 % ------------------------------------------------------------
-% One accent per area. The first five are carried over unchanged from the
-% archived deck -- the book inherited its visual identity rather than inventing
-% a new one.
 \definecolor{ArithColor}{HTML}{6BAED6}
 \definecolor{OpsColor}{HTML}{FD8D3C}
 \definecolor{LogicColor}{HTML}{9C27B0}
 \definecolor{SeqColor}{HTML}{388E3C}
 \definecolor{MixColor}{HTML}{D81B60}
-% Area 6 has no counterpart in the deck, so its accent is chosen here rather
-% than carried over: a deep teal, far enough from the five above to be told
-% apart at badge size.
 \definecolor{TrickColor}{HTML}{00838F}
 
-\definecolor{btrule}{HTML}{D8DEE4}   % frame hairline and badge fill
-\definecolor{btink}{HTML}{1F4E79}    % badge digits
-\definecolor{btanswer}{HTML}{2E6B4F} % answer box rule
+\definecolor{btrule}{HTML}{C8D0D8}
+\definecolor{btink}{HTML}{1F4E79}
 \definecolor{btgrey}{HTML}{5A5A5A}
 
 % ------------------------------------------------------------
-%  The frame
+%  The answer store
 % ------------------------------------------------------------
-\newcounter{frameno}[chapter]
-\renewcommand{\theframeno}{\arabic{frameno}}
-
-% The frame number lives in the OUTER margin: right on a recto, left on a
-% verso, following the spread. The reason is navigational rather than
-% decorative -- a reader thumbing for exercise 37 runs a finger down the edge
-% of the block and never crosses the text.
+% Answers are written at the point of use and printed at the BACK. Carrying
+% them there through a global macro store rather than an .aux file is
+% deliberate: material written to an aux-style file is expanded at shipout,
+% where a fragile command breaks with an error naming neither the answer nor
+% the set it came from. \include is sequential within a run, so a macro defined
+% globally while typesetting set 3 is still defined when the appendix is set.
 %
-% The fill is the same grey the rule is drawn in, so the badge reads as a tab
-% ON the rule rather than as a second, competing object. text height/depth are
-% fixed so that 1 and 38 get boxes of the same height.
-\makeatletter
-\newcommand{\bt@drawbadge}[1]{%
-  \tikz{\node[fill=btrule, rounded corners=2.5pt,
-              inner xsep=4.5pt, inner ysep=2.2pt, outer sep=0pt,
-              text=btink, font=\bfseries\normalsize,
-              text height=1.55ex, text depth=0.05ex]{#1};}%
-}
-\makeatother
+% \csxappto expands \thezad at store time -- the number has to be frozen when
+% the exercise is written, not when the appendix is -- while \unexpanded keeps
+% the answer's own tokens literal, so $ and \frac survive to the back page.
+\newcounter{zestaw}
+\newcounter{zad}[zestaw]
 
-\newsavebox{\btbadgebox}
-
-% The gutter between frames, and the single most load-bearing pair of numbers
-% in the layout: the frame is the unit the reader covers with a hand, and two
-% frames a hairline apart are one block of text to the eye no matter what the
-% rule says. Generous above, tighter below, so the white space reads as
-% belonging to the frame that FOLLOWS it.
-\newlength{\btframeabove}
-\newlength{\btframebelow}
-\setlength{\btframeabove}{17pt}
-\setlength{\btframebelow}{12pt}
-
-% The boundary between two frames: a hairline across the measure with the new
-% frame's number in the outer margin beside it.
-%
-% \marginnote is issued from the rule's own line, in HORIZONTAL mode, so that
-% the note and the rule share a baseline. Called from vertical mode it attaches
-% to the wrong baseline and the badge drifts.
-%
-% The badge is centred on the rule by measuring its OWN box: the rule is 0.6pt
-% tall and sits on the baseline, so its centre is 0.3pt above it, and a box's
-% centre is (\ht-\dp)/2 above its own baseline. Do not replace this with a
-% fixed shift -- the badge's tikz box is nowhere near zero-height, and a
-% hard-coded offset stops being right the moment the body size changes.
-\makeatletter
-\newcommand{\bt@framerule}{%
-  \par\penalty-250
-  \vspace{\btframeabove}%
-  \noindent
-  \rlap{\textcolor{btrule}{\rule{\linewidth}{0.6pt}}}%
-  \sbox\btbadgebox{\bt@drawbadge{\theframeno}}%
-  \marginnote{%
-    \raisebox{\dimexpr0.3pt-0.5\ht\btbadgebox+0.5\dp\btbadgebox\relax}%
-             {\usebox{\btbadgebox}}%
-  }%
-  \par\nobreak\vspace{\btframebelow}%
-  \nobreak
+% \btsep, not \quad. An answer list is a long run of short unbreakable items
+% with no hyphenation anywhere in it, so a rigid separator leaves TeX no legal
+% breakpoint it can afford and every line comes out overfull -- measured at
+% 12.0pt, seventeen times, on the first build of this appendix. The penalty
+% offers the breakpoint and the stretch lets the line end early.
+\newcommand{\btsep}{\penalty0\hskip 0.9em plus 0.6em minus 0.25em\relax}
+\newcommand{\btstoreans}[1]{%
+  \csxappto{btans@\thezestaw}{\thezad)~\unexpanded{#1}\noexpand\btsep}%
 }
 
-% The frame.
-%
-% The \makeatletter pair around this definition is REQUIRED and is not
-% decoration: \bt@framerule is tokenised when the environment body is read, and
-% if @ is not a letter at that moment TeX splits it into \bt and @framerule and
-% the build dies with "Undefined control sequence" pointing at \begin{fr} --
-% naming the frame, not the macro. Hit once while writing this file.
-%
-% The room test exists because without it the rule and its margin badge are the
-% last things on a page and the frame's body is overleaf -- a badge naming a
-% frame that is not on the page defeats the one thing the badge is for, and
-% \nobreak cannot prevent it, because a frame opening with an unbreakable
-% tcolorbox simply moves itself to the next page and leaves the rule behind.
-%
-% \pagegoal is \maxdimen on a fresh page, which means UNLIMITED and not "no
-% room"; testing it the obvious way turns a page at the top of every chapter.
-%
-% FIVE \baselineskip, and this number is PROVISIONAL. In the source repository
-% the equivalent constant is seven, swept against a tool that reads the
-% finished PDF and fails on a stranded opener. Five is chosen here because a
-% frame in this book is shorter than one there -- an answer box, a badge line
-% and a one- or two-line exercise -- and seven would turn pages this book does
-% not need to turn. It has NOT been swept, because a sweep needs all 38
-% exercises converted (issue #17) and a checkpdf port to sweep against. Do not
-% treat it as measured until that table exists, and when it does, replace this
-% paragraph with it: a sweep table naming a constant the code no longer uses is
-% worse than none, because it reads as evidence.
-\newenvironment{fr}{%
-  \par
-  \ifdim\pagegoal=\maxdimen\else
-    \ifdim\dimexpr\pagegoal-\pagetotal\relax<%
-          \dimexpr\btframeabove+\btframebelow+5\baselineskip\relax
-      \newpage
-    \fi
-  \fi
-  \refstepcounter{frameno}%
-  \bt@framerule
-  \noindent\ignorespaces
-}{\par}
-\makeatother
+\newlength{\btzadskip}
+\setlength{\btzadskip}{3.2pt}
 
 % ------------------------------------------------------------
-%  The answer
+%  \z -- one exercise on one line
 % ------------------------------------------------------------
-% Two box treatments would be one too many for a book this size, so there is
-% one: a rule on white, the thing the reader must stop at.
+% A number, the problem, and a rule to write on. That is the whole element.
+% There is no difficulty star and no per-exercise timer: both are properties of
+% the SET, printed once at its head, and repeating them thirty times a page
+% would be noise that costs exercises.
 %
-% halign=flush center, NOT halign=center. `center' stretches interword and
-% maths glue to fill the measure, so a too-wide answer is hidden by loose
-% spacing instead of overflowing where the log can see it. `flush center'
-% cannot stretch, so an over-wide answer raises an overfull hbox and
-% tools/checklog.py catches it.
-%
-% `unbreakable' comes AFTER the style, because the style carries `breakable'
-% and listing the keys the other way round silently re-enables breaking.
-\tcbset{
-  bt answer/.style={
-    enhanced, breakable, sharp corners,
-    boxrule=0.6pt,
-    colback=white, colframe=btanswer,
-    left=10pt, right=10pt, top=6pt, bottom=6pt,
-    before skip=4pt, after skip=10pt,
-  },
+% \strut so rows keep an even pitch whether or not the problem has a fraction
+% or an exponent in it -- a column of drill lines that breathes unevenly is
+% harder to run down with a pencil.
+\newcommand{\z}[2]{%
+  \stepcounter{zad}%
+  \btstoreans{#2}%
+  \par\noindent
+  \makebox[2.1em][r]{\color{btgrey}\footnotesize\thezad.\ }%
+  #1\,\hfill\rule[-0.2ex]{2.6em}{0.4pt}%
+  \strut\par\vspace{\btzadskip}%
 }
 
-% \ans{answer}{hint} -- the answer to the exercise in the PREVIOUS frame, set
-% apart and centred so the eye can find the edge to cover, and so a reader who
-% has answered can check in one glance without reading on.
-%
-% The hint is the deck's third \AnswerSlide argument and keeps its rule: the
-% answer shows the result plus at most a one-line how-it-works, never a
-% step-by-step. \ifblank so an answer with no hint contributes nothing at all
-% rather than an empty line.
-% Both arguments are LONG (`+m`). An exercise body may contain an explicit
-% \par -- the deck sets multi-line problems that way and 20 of the 38 do -- and
-% an xparse argument is short unless asked otherwise, so a plain `m` fails with
-% "Paragraph ended before \ans was complete", which names the macro and not the
-% \par that caused it.
-\NewDocumentCommand{\ans}{ +m +m }{%
-  \par\nobreak
-  \begin{tcolorbox}[bt answer, unbreakable,
-                    width=0.86\linewidth, center, halign=flush center]
-    {\Large\bfseries #1}%
-    \ifblank{#2}{}{\par\vspace{4pt}{\small\itshape\color{btgrey}#2}}%
-  \end{tcolorbox}%
-  \nobreak\noindent\ignorespaces
+% Wider exercises -- a word puzzle, a sequence with many terms -- that will not
+% sit three to a row. Same numbering and the same answer store; only the
+% surrounding column count differs, and that is the set's business.
+\newcommand{\zz}[2]{%
+  \stepcounter{zad}%
+  \btstoreans{#2}%
+  \par\noindent
+  \makebox[2.1em][r]{\color{btgrey}\footnotesize\thezad.\ }%
+  % The parbox must leave room for EVERYTHING beside it: the 2.1em number box
+  % before it and the 2.6em answer rule after it, plus a gap. Reserving 3.6em
+  % for 4.7em of furniture overflowed every wide line by exactly the missing
+  % 1.1em -- 12.045pt at 11pt, and the constant width across sixteen boxes is
+  % what said it was arithmetic rather than bad line breaking.
+  \parbox[t]{\dimexpr\linewidth-5.6em\relax}{\raggedright #1\strut}%
+  \hfill\rule[-0.2ex]{2.6em}{0.4pt}%
+  \par\vspace{\btzadskip}%
 }
 
 % ------------------------------------------------------------
-%  The exercise
+%  The set
 % ------------------------------------------------------------
-% Difficulty, target time and category, carried over from the deck's own
-% macros so the two formats grade identically.
+% \begin{zestaw}{title}{stars}{target time}{columns}
 %
-% The star mapping is the README's contract and the front matter repeats it:
-% 1 = easy, up to 1 min; 2 = medium, 1-3 min; 3 = hard, 3-5 min.
+% The head carries the three things that are true of every exercise below it --
+% what kind, how hard, how long the whole set should take -- and the foot
+% carries the two the reader writes in. Those two boxes are the point of the
+% book: a set you did not time and did not score is just a page of sums.
 \newcommand{\DifficultyStars}[1]{%
   \ifcase#1
   \or {\color{orange}\faStar}\faStar[regular]\faStar[regular]%
@@ -290,141 +145,90 @@
   \fi
 }
 
-\newcommand{\TimerBadge}[1]{%
-  \tikz[baseline=(b.base)]{%
-    \node[fill=black!8, rounded corners=3pt, inner xsep=5pt, inner ysep=2.5pt,
-          outer sep=0pt, font=\small\bfseries] (b) {\faClock[regular]\ #1};%
-  }%
-}
-
-\NewDocumentCommand{\CategoryBadge}{ o m }{%
-  \tikz[baseline=(b.base)]{%
-    \node[fill=\IfValueTF{#1}{#1}{black!8}, rounded corners=2pt,
-          inner xsep=4pt, inner ysep=2pt, outer sep=0pt,
-          font=\footnotesize\bfseries] (b) {#2};%
-  }%
-}
-
-% \exercise[category badge]{stars}{time}{problem}
-%
-% The argument order is the deck's \ExerciseSlide, unchanged, so the conversion
-% in issue #17 is mechanical and a contributor who knows one format knows both.
-%
-% The header line carries the grading and the category; the problem is set
-% large and centred under it, because the reader is looking at one question at
-% a time with a hand over the rest of the page.
-% The problem is a LONG argument, for the reason given above \ans.
-\NewDocumentCommand{\exercise}{ o m m +m }{%
+\newcommand{\btsetfoot}{%
+  \par\vspace{6pt}%
+  \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\vspace{4pt}%
   \noindent
-  {\DifficultyStars{#2}}\hfill
-  \IfValueT{#1}{#1\hspace{0.6em}}\TimerBadge{#3}%
-  \par\vspace{6pt}
-  \begingroup\centering
-  {\large #4\par}%
-  \endgroup
+  {\bfseries Czas:}~\rule[-0.4ex]{6em}{0.4pt}\hfill
+  {\bfseries Poprawne:}~\rule[-0.4ex]{3em}{0.4pt}\,/\,\thezad\hfill
+  {\bfseries Data:}~\rule[-0.4ex]{6em}{0.4pt}%
   \par
 }
 
-% ------------------------------------------------------------
-%  The chapter's frame range, carried through the .aux
-% ------------------------------------------------------------
-% A chapter opener says "Ramki 1-11", which is the reader's answer to "how much
-% is this chapter". The total is only known once the chapter has been typeset,
-% so it is written to the .aux at the end of the chapter and read back on the
-% NEXT run: a two-pass value.
-%
-% It is written when the FOLLOWING chapter starts (and at \end{document} for
-% the last one), because there is no end-of-chapter hook. At that moment the
-% frame counter still holds the chapter that is closing -- \newcounter's parent
-% reset has not fired yet, since \chapter has not stepped the chapter counter.
-%
-% A chapter with no recorded total prints NOTHING and reserves nothing. It must
-% never print "??": on a first run every opener would carry the marker, which
-% teaches a reader to ignore it, and the marker would then be invisible on the
-% one run where it meant something. An absent range is a run that has not
-% converged, and checklog.py fails the build on the rerun warning that says so.
-\makeatletter
-\newcommand{\bt@openchap}{}
-\newcommand{\btframetotal}[2]{\global\@namedef{bt@total@#1}{#2}}
-% \ifdefempty, NOT \ifx\bt@openchap\@empty. \newcommand declares a \long macro
-% and \@empty is not one, so \ifx compares unequal even when both bodies are
-% empty -- which wrote a stray \btframetotal{}{0} into the .aux on the first
-% \chapter* of the run. Harmless, because nothing reads an empty key, and
-% exactly the kind of harmless noise that costs somebody an hour later.
-\newcommand{\bt@flushtotal}{%
-  \ifdefempty{\bt@openchap}{}{%
-    \immediate\write\@auxout{%
-      \string\btframetotal{\bt@openchap}{\the\value{frameno}}}%
-  }%
+\newenvironment{zestaw}[4]{%
+  \refstepcounter{zestaw}%
+  \par\addvspace{10pt}%
+  % Head
+  \noindent\textcolor{btink}{\rule{\linewidth}{1.2pt}}\par\vspace{3pt}%
+  \noindent
+  {\large\bfseries ZESTAW \thezestaw}\quad{\large #1}%
+  \hfill \DifficultyStars{#2}\quad
+  \tikz[baseline=(b.base)]{\node[fill=black!8, rounded corners=3pt,
+    inner xsep=5pt, inner ysep=2.5pt, outer sep=0pt,
+    font=\small\bfseries] (b) {\faClock[regular]\ cel: #3};}%
+  \par\vspace{2pt}%
+  \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\vspace{7pt}%
+  \addcontentsline{toc}{section}{Zestaw \thezestaw\ --- #1}%
+  % multicol warns at one column, and it is right to: a one-column set is just
+  % a list. The wide sets (word puzzles, long prompts) are exactly that.
+  \def\btcols{#4}%
+  \ifnum#4>1 \begin{multicols}{#4}\raggedcolumns \fi
+}{%
+  \ifnum\btcols>1 \end{multicols}\fi
+  \btsetfoot
 }
-\pretocmd{\chapter}{\bt@flushtotal}{}{%
-  \PackageWarning{braintrain}{could not hook \string\chapter\space for frame totals}}
-\AtEndDocument{\bt@flushtotal}
 
-% "Ramki 1--N", or nothing at all if this run does not know N yet.
-\newcommand{\bt@framerange}{%
-  \@ifundefined{bt@total@\thechapter}{}{%
-    \vspace{4pt}%
-    {\small\color{btgrey}Ramki 1--\@nameuse{bt@total@\thechapter}}%
-    \par
-  }%
+% ------------------------------------------------------------
+%  The answers appendix
+% ------------------------------------------------------------
+% Every set's answers, in order, at the back. \ifcsdef rather than an assumed
+% range: a set that stored nothing prints nothing, instead of an empty heading
+% that reads like a missing page.
+\newcounter{btansi}
+\newcommand{\odpowiedzi}{%
+  \chapter*{Odpowiedzi}%
+  \addcontentsline{toc}{chapter}{Odpowiedzi}%
+  \markboth{Odpowiedzi}{Odpowiedzi}%
+  \small\raggedright
+  \setlength{\parindent}{0pt}%
+  \setcounter{btansi}{0}%
+  \loop\ifnum\value{btansi}<\value{zestaw}%
+    \stepcounter{btansi}%
+    \ifcsdef{btans@\thebtansi}{%
+      \par\addvspace{7pt}%
+      {\bfseries\color{btink}Zestaw \thebtansi}\par\vspace{1pt}%
+      \csuse{btans@\thebtansi}\par
+    }{}%
+  \repeat
 }
-\makeatother
 
 % ------------------------------------------------------------
 %  Chapter openers and running heads
 % ------------------------------------------------------------
-% A chapter opens between two rules -- a hairline over the area label, a heavy
-% one under the title. Chapters are what this book navigates by: the TOC, the
-% running heads and every "see exercise N" all name a chapter and a frame.
 \makeatletter
 \renewcommand{\@makechapterhead}[1]{%
-  \vspace*{10pt}%
+  \vspace*{4pt}%
   {\parindent\z@\raggedright\normalfont
-   \textcolor{btrule}{\hrule height 0.6pt}%
-   \vspace{6pt}%
    {\small\bfseries\color{btgrey}\MakeUppercase{\chaptername\ \thechapter}}%
-   \par\vspace{4pt}%
-   {\Huge\bfseries #1}%
-   \par
-   \gdef\bt@openchap{\thechapter}%
-   \bt@framerange
-   \vspace{8pt}%
-   \textcolor{btink}{\hrule height 1.6pt}%
-   \vspace{28pt}%
+   \par\vspace{2pt}%
+   {\huge\bfseries #1}%
+   \par\vspace{5pt}%
+   \textcolor{btink}{\hrule height 1.4pt}%
+   \vspace{12pt}%
   }%
 }
-% Unnumbered chapters (the front matter) get the same treatment without the
-% area label, so "Jak korzystać z tej książki" is visibly the same kind of
-% object as an area.
-%
-% \bt@openchap is cleared here: a \chapter* records no total, and leaving the
-% previous chapter's key set would attribute this one's frame count to it.
 \renewcommand{\@makeschapterhead}[1]{%
-  \vspace*{10pt}%
+  \vspace*{4pt}%
   {\parindent\z@\raggedright\normalfont
-   \gdef\bt@openchap{}%
-   \textcolor{btrule}{\hrule height 0.6pt}%
-   \vspace{10pt}%
-   {\Huge\bfseries #1}%
-   \par\vspace{8pt}%
-   \textcolor{btink}{\hrule height 1.6pt}%
-   \vspace{28pt}%
+   {\huge\bfseries #1}%
+   \par\vspace{5pt}%
+   \textcolor{btink}{\hrule height 1.4pt}%
+   \vspace{12pt}%
   }%
 }
-\makeatother
-
-% The blank verso that \cleardoublepage inserts before a chapter is blank in
-% the BODY only: the class still ships it with the current page style, so it
-% comes out carrying a running head and a page number over an otherwise empty
-% sheet. Measured on this book's own first build -- page iv had "iv" and a head
-% rule on it and nothing else.
-%
-% The source repository records this defect and deliberately left it alone,
-% because it was out of scope for the program being written and it moves no
-% page. It is in scope here: this is the build that establishes the layout, and
-% the fix costs six lines and changes no pagination.
-\makeatletter
+% A blank verso carries no running head. The page \cleardoublepage inserts is
+% blank in the BODY only; left alone it ships a head and a page number over an
+% otherwise empty sheet.
 \renewcommand{\cleardoublepage}{%
   \clearpage
   \if@twoside
@@ -438,44 +242,13 @@
 
 \pagestyle{fancy}
 \fancyhf{}
-
-% Mirrored, as the original is: the PAGE NUMBER goes OUTER and the running
-% title INNER, and the foot is empty. Chapter openers keep the class's `plain'
-% style -- number at the foot, no head -- which fancyhdr does not touch.
-%
-% \btheadmark is a WIDTH CAP and it is not optional. The page number and the
-% running title share one measure and fancyhdr does not referee: an over-long
-% field is set at its natural width and simply PRINTS ON TOP of the number. It
-% raises no overfull hbox, so no log gate can see it. Measure the box and scale
-% only when it is too wide, reserving room at the head's own size so the
-% reserve tracks the point size.
-\makeatletter
-\newlength{\bt@headwd}
-\newcommand{\btheadmark}[1]{%
-  \begingroup
-  \setlength{\bt@headwd}{\dimexpr\headwidth-4em\relax}%
-  \sbox\z@{\small #1}%
-  \ifdim\wd\z@>\bt@headwd
-    \resizebox{\bt@headwd}{!}{\usebox{\z@}}%
-  \else
-    \usebox{\z@}%
-  \fi
-  \endgroup
-}
-\makeatother
-
 \fancyhead[LE,RO]{\small\thepage}
-\fancyhead[RE]{\btheadmark{\nouppercase{\leftmark}}}
-\fancyhead[LO]{\btheadmark{\itshape\nouppercase{\rightmark}}}
+\fancyhead[RE,LO]{\small\itshape\nouppercase{\leftmark}}
 \renewcommand{\headrulewidth}{0.4pt}
 
-% This MUST come after \pagestyle{fancy}: fancyhdr installs its own
-% \chaptermark at that point and silently discards anything defined earlier.
-% The symptom is a running-head change that appears to do nothing at all.
-%
-% \@chapapp rather than a hard-coded word, so babel supplies it in the right
-% language and an appendix does not get a head reading "Rozdział A" over a page
-% whose own heading says "Dodatek A".
+% Must come AFTER \pagestyle{fancy}: fancyhdr installs its own \chaptermark at
+% that point and silently discards anything defined earlier. The symptom is a
+% running-head change that appears to do nothing at all.
 \makeatletter
-\renewcommand{\chaptermark}[1]{\markboth{\@chapapp\ \thechapter}{#1}}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{#1}}
 \makeatother

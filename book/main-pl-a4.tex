@@ -1,25 +1,20 @@
 % ============================================================
-%  Trening Mózgu -- A4, 12pt
+%  Trening Mózgu -- A4, 11pt
 %  konradcinkusz
 %
-%  The main file is deliberately thin. Everything that decides how the book
-%  looks is in preamble.tex and everything it contains is in structure.tex, so
-%  a second paper size (or a second language, should one ever exist) is a new
-%  main file of this length and NOT a second copy of the book's wiring. That is
-%  the one rule worth keeping from the source repository's four-main-file
-%  arrangement: a chapter cannot go missing from one format, because there is
-%  only one list of chapters.
+%  Thin on purpose: the format lives in preamble.tex and the contents in
+%  structure.tex, so adding a set or a paper size never means editing the
+%  book's wiring twice.
 %
 %  Build:  make book        -- from the repository root, gated on the log
-%          latexmk -pdf main-pl-a4.tex   -- from this directory, ungated
 %
-%  Do NOT trust latexmk's exit code alone. Under -interaction=nonstopmode a
-%  failed run still writes a PDF, and with -file-line-error an error line
-%  begins with a path rather than "!", so `grep '^!'` sees nothing either.
+%  Do NOT trust latexmk's exit code. Under -interaction=nonstopmode a failed
+%  run still writes a PDF, and with -file-line-error an error line begins with
+%  a path rather than "!", so `grep '^!'` sees nothing either.
 %  tools/checklog.py is the gate.
 % ============================================================
 
-\documentclass[12pt,twoside,openright]{book}
+\documentclass[11pt,twoside,openright]{book}
 
 \input{preamble}
 
@@ -37,5 +32,8 @@
 
 \mainmatter
 \input{structure}
+
+\backmatter
+\odpowiedzi
 
 \end{document}

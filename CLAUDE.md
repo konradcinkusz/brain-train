@@ -8,14 +8,13 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 
 | | Done | Remaining |
 |---|---|---|
-| Book (A4, Stroud) | Six areas, 52 exercises, front matter, TOC, chapter frame ranges, difficulty ladder | — |
-| Build | `make book`, three gates, CI on every push and PR, tag-driven release | — |
+| Book (A4) | 18 sets, 434 exercises, front matter, TOC, answer appendix | — |
+| Build | `make book`, two gates, CI on every push and PR, tag-driven release | — |
 | Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
 | Docs | README, `CONTRIBUTING.md`, this file | — |
 
-The book is **26 pages, 58 frames, zero errors, zero unresolved references,
-zero overfull boxes**, with all 58 margin badges in the correct outer margin.
-Every area carries at least two one-star exercises and at least eight in total.
+The book is **16 pages, 18 sets, 434 exercises, zero errors, zero unresolved
+references, zero overfull boxes**.
 
 **Re-measure those numbers from the build in front of you.** Page counts and
 the overfull multiset are functions of the layout constants and do not survive
@@ -25,20 +24,27 @@ being carried across a change.
 
 ## What this book is
 
-One exercise per **frame** — a slice of page between two hairlines, with its
-number in the outer margin. The answer to an exercise does not sit under it: it
-opens the **next** frame. The reader covers the page below the rule, works the
-exercise against a stopwatch, then reads on.
+A **drill book**. The unit is a **set**: ~30 short exercises listed one under
+another on a page, done in one go against a stopwatch, scored as a whole. Every
+answer is in one appendix at the **back**.
 
-That single rule is the whole format, and it is why the book is not just the
-deck reflowed. A slide deck can put an answer on its own slide because the
-reader cannot see it until they advance. A book cannot.
+**What it measures is throughput, not the correctness of any one exercise.** How
+many you got through, how fast, and whether that improves when you come back to
+the same set a week later — which is why every set has a Czas / Poprawne / Data
+box under it.
 
-The layout is ported from
-[`konradcinkusz/math-for-ai-engineers`](https://github.com/konradcinkusz/math-for-ai-engineers),
-whose **code is MIT** (only that book's prose is CC BY-NC-SA).
+### The design this replaced, and why
 
----
+The first version gave every exercise its own **frame**, with the answer opening
+the next one — Stroud's programmed-instruction layout, ported from
+[`math-for-ai-engineers`](https://github.com/konradcinkusz/math-for-ai-engineers).
+It was carefully built and it was the wrong shape for this book. That layout
+exists to teach a step. Here it put **two exercises on a page**, made the page
+ceremony rather than work, and dropped an answer into the middle of a run the
+reader is being timed on. 52 exercises took 26 pages; the same book now carries
+434 in 16.
+
+Nothing of it is kept. It is in `deck-archive/` with its own note.
 
 ## Non-negotiable conventions
 
@@ -54,15 +60,19 @@ PDF, and with `-file-line-error` an error line begins with a path rather than
 `!`. A build can be broken, silent and green all at once — that is exactly how
 v1.0.0 shipped with no PDF (#21).
 
-**`book/chapters/` is generated. Do not edit it.** It comes from `areas/` via
-`tools/convert_deck.py`; edit `areas/` and run `make convert`. `make drift`
-fails when the two disagree, and CI runs it before the build.
+**`book/sets/generated/` is generated. Do not edit it.** It comes from
+`tools/gen_sets.py`; edit the generator and run `make sets`. `make drift` fails
+when the two disagree, and CI runs it before the build.
 
-The generator survived #16 retiring the deck, and the reason is worth keeping:
-in `areas/` an exercise sits beside **its own** answer, while in the book the
-answer opens the *next* frame and so sits beside the *next* exercise. Authoring
-straight into the book format means shifting every answer by one by hand. The
-converter does that shift; the gate proves it was not skipped.
+**Arithmetic is generated; puzzles are not.** The book is scored on volume, and
+several hundred hand-typed sums is where arithmetic slips hide — the generator
+computes each answer with the same three lines that lay out its question, so a
+printed answer cannot disagree with its printed question. A word trap is a joke
+and a joke has an author, so those stay hand-written in `book/sets/`.
+
+**The generator is deterministic.** Every set seeds its own `Random` with a
+fixed integer. A drill book whose pages change under you cannot be re-run to
+compare times, which is the one thing this book is for.
 
 **A digit stays a digit, and diacritics are copied as found.** The deck mixes
 UTF-8 (`Kolejność`) with TeX escapes (`Mno\. zenie`); both reach the same glyph
@@ -80,47 +90,46 @@ check can see it. Name the rule and the places it applies.
 
 Everything below is in `book/preamble.tex` beside the code it governs.
 
-- **`\begin{fr}`** reserves room before it will typeset, or the rule and its
-  margin badge end up as the last things on a page with the frame's body
-  overleaf. `\nobreak` cannot prevent this: a frame opening with an unbreakable
-  tcolorbox moves itself and leaves the rule behind. `\pagegoal` is `\maxdimen`
-  on a fresh page, meaning *unlimited*, not *no room*.
-  **The reservation is 5 `\baselineskip` and is PROVISIONAL** — reasoned, not
-  swept. A real sweep needs a `checkpdf` port to sweep against. Do not treat it
-  as measured until that table exists, and when it does, replace the comment
-  with it: a sweep table naming a constant the code no longer uses reads as
-  evidence and is worse than none.
+- **Margins are tight (1.5--1.8 cm).** The page is a worksheet; every millimetre
+  of margin is an exercise that did not fit. Nothing lives in the margins any
+  more, so nothing needs room out there.
 
-- **The badge is a `\marginnote`, never a `\marginpar`.** `\marginpar` floats,
-  takes one note per line and defers the rest; at four to eight frames a page
-  that is the normal case, and a badge that has moved no longer names the frame
-  it belongs to. Loaded `[quiet,noadjust]` — under the default it emits a
-  `\strut` into the rule's line. **Nothing may set `\reversemarginpar`**;
-  marginnote honours it and would silently move every badge to the inner
-  margin. `tools/checkbadges.py` reads the finished PDF and fails on exactly
-  that.
+- **Stars and the target time print once, at the head of the set.** They are
+  properties of the set, not of an exercise. Repeating them thirty times a page
+  would be noise that costs exercises.
 
-- **`\makeatletter` must span the `fr` definition.** `@` is not a letter when
-  the environment body is tokenised, so `\bt@framerule` splits and the build
-  dies naming `\begin{fr}` rather than the macro. Hit once.
+- **Answers reach the back through a global macro store**, not the `.aux`.
+  Material written to an aux-style file is expanded at shipout, where a fragile
+  command breaks with an error naming neither the answer nor the set it came
+  from. `\include` is sequential within a run, so a macro defined globally while
+  typesetting set 3 is still defined when the appendix is set. `\csxappto`
+  freezes the exercise number at store time while `\unexpanded` keeps the
+  answer's own tokens literal, so `$` and `\frac` survive to the back page.
 
-- **`\ans` and `\exercise` take LONG arguments (`+m`).** 20 of the 38 exercises
-  set multi-line problems with an explicit `\par`, and an xparse argument is
-  short unless asked otherwise. The failure names the macro, not the `\par`.
+- **The answer separator is `\btsep`, never `\quad`.** An answer list is a long
+  run of short unbreakable items with no hyphenation anywhere in it, so a rigid
+  separator leaves TeX no affordable breakpoint and every line comes out
+  overfull — measured at 12.0 pt, seventeen times, on this appendix's first
+  build. `\btsep` carries a `\penalty0` and stretch; the appendix is also set
+  `\raggedright`, because it is a lookup table and there is nothing to gain from
+  justifying it.
 
-- **`halign=flush center`, not `halign=center`,** on the answer box. `center`
-  stretches glue to fill the measure, so an over-wide answer is hidden by loose
-  spacing instead of overflowing where the log can see it.
+- **`\zz`'s parbox reserves 5.6em, not 3.6em.** It must leave room for
+  *everything* beside it: the 2.1em number box before and the 2.6em answer rule
+  after. Reserving 3.6em for 4.7em of furniture overflowed every wide line by
+  exactly the missing 1.1em. **The constant 12.045 pt across sixteen boxes is
+  what said it was arithmetic rather than bad line breaking** — a varying
+  overflow is a paragraph problem, an identical one is a sum that does not add
+  up.
 
-- **The chapter frame range is a two-pass value** carried in the `.aux`, written
-  when the *following* chapter starts (there is no end-of-chapter hook) and read
-  back next run. A chapter with no recorded total prints **nothing**, never
-  `??`: on a first run every opener would carry the marker, teaching the reader
-  to ignore it. Test emptiness with `\ifdefempty`, not
-  `\ifx\...\@empty` — `\newcommand` declares a `\long` macro and `\@empty` is
-  not one, so `\ifx` compares unequal even with both bodies empty.
+- **Internal macros carry no `@`.** `@` is not a letter outside
+  `\makeatletter`, so `\newcommand{\bt@foo}` splits and the build dies with
+  *You already have nine parameters* pointing at the wrong line. This preamble
+  was bitten by that twice; a `bt` prefix marks a macro internal without needing
+  a catcode change.
 
----
+- **A one-column set does not open `multicols`.** multicol warns at one column
+  and is right to: a one-column set is a plain list.
 
 ## Traps already hit
 
@@ -136,21 +145,23 @@ Everything below is in `book/preamble.tex` beside the code it governs.
 - **A killed latexmk can leave a NUL-filled `.out`,** and the next run dies with
   *Text line contains an invalid character* in a file nobody edited. The tell is
   that the error names an `.out`, `.aux` or `.toc` rather than a `.tex`.
-- **Do not judge layout from a low-resolution render.** Twice now an 80 dpi PNG
-  suggested the answer box was flush left or its borders asymmetric; at 150 dpi,
-  measured in pixels, it was exactly the centred `0.86\linewidth` both times.
-  Measure, or say you have not.
+- **Do not judge layout from a low-resolution render.** Twice an 80 dpi PNG
+  suggested a box was misplaced; measured at 150 dpi it was exactly right both
+  times. Measure, or say you have not.
+- **A constant overfull width is arithmetic, not line breaking.** Sixteen boxes
+  at an identical 12.045 pt was the tell; see the `zz` parbox above.
 
 ---
 
 ## Prove a new check fires before trusting it
 
-Both PDF-reading checks were verified by introducing the defect they guard:
-`checkbadges.py` against a build with `\reversemarginpar` (24 badges flagged,
-exit 1), and `make drift` against an answer edited in `areas/` and not
-re-converted (`STALE`, exit 1). A check that has never failed may be measuring
-nothing — and both of these read a finished artifact, where a silent pass looks
-identical to a real one.
+`make drift` was verified by editing the generator without regenerating
+(`STALE`, exit 1). A check that has never failed may be measuring nothing.
+
+**And retire a check that has stopped measuring.** `checkbadges.py` guarded
+frame numbers in the outer margin. There are no margin numbers now, so it would
+pass forever on a book it no longer describes; it is archived rather than left
+in the gate looking like coverage.
 
 ---
 
@@ -178,7 +189,7 @@ carries nothing.
 
 ```bash
 make book      # build + all three gates
-make convert   # areas/ -> book/chapters/
+make sets      # regenerate the drill sets
 make drift     # are they in sync?
 make clean
 ```
