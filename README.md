@@ -15,7 +15,7 @@ Zeszyt ćwiczeń na czas: arytmetyka, kolejność działań, procenty, ułamki,
 potęgi, ciągi, zagadki logiczne i triki rachunkowe. **Nie liczy się pojedynczy
 wynik — liczy się ile zadań zrobisz i jak szybko.**
 
-**3424 zadania · 88 zestawów · 76 stron A4** — i gotowy **plan na 13 tygodni**,
+**3424 zadania · 88 zestawów · 86 stron A4** — i gotowy **plan na 13 tygodni**,
 dzień po dniu.
 
 ## Quick start
@@ -44,8 +44,14 @@ ZESTAW 1   Dodawanie dwucyfrowe              ★☆☆   ⏱ cel: 3:20
   ...                  ...                   ...
  14. 89 + 35  ____     27. 22 + 50  ____     40. 15 + 18  ____
 ─────────────────────────────────────────────────────────────────
-Czas: ________   Poprawne: ____ / 40   Data: ________
+1.  Czas: ________   Poprawne: ____ / 40   Data: ________
+2.  Czas: ________   Poprawne: ____ / 40   Data: ________
 ```
+
+**Dwa wiersze, nie jeden.** Książka od początku każe wrócić do zestawu po
+tygodniu i porównać — i dawała na to jedną linijkę. Plan wyznacza tę powtórkę
+na konkretny dzień dla większości zestawów, więc drugi pomiar musi mieć gdzie
+usiąść, obok pierwszego. Zestawy kontrolne mają pięć wierszy.
 
 Każdy zestaw rachunkowy ma tyle samo zadań, bo dwa czasy da się porównać tylko
 wtedy, gdy mierzą tę samą pracę. Zestaw nigdy nie jest rozbity między strony —
@@ -55,6 +61,9 @@ w buildzie.
 Rubryka na datę jest tam celowo: jeden pomiar nie mówi nic. Wracasz do tego
 samego zestawu za tydzień i porównujesz — ten sam zestaw, krótszy czas, mniej
 pomyłek.
+
+Odpowiedzi z tyłu mają w żywej paginie zakres zestawów na stronie
+(`Odpowiedzi 26–37`), bo osiem stron tablicy bez tego przegląda się palcem.
 
 ## Plan na 13 tygodni
 
