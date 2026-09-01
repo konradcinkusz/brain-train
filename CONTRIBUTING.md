@@ -9,8 +9,7 @@ formatu i przeszły bramki.
 
 Nie to, czy pojedyncze zadanie jest ciekawe. **Ile zadań czytelnik zrobi i jak
 szybko.** Wszystko poniżej z tego wynika: zadania są krótkie, jedno pod drugim,
-po 24--30 na stronie, a odpowiedzi są na końcu książki, żeby nie przerywały
-serii.
+a odpowiedzi są na końcu książki, żeby nie przerywały serii.
 
 Zadanie, które wymaga akapitu wstępu, nie pasuje do tej książki.
 
@@ -31,34 +30,48 @@ kodem, którym układa zadanie, więc nie mogą się rozjechać.
 
 ## Nowe zadanie rachunkowe
 
-Dopisz je do generatora. Zadanie i odpowiedź powstają razem:
+Dopisz je do generatora. **Builder losuje JEDNO zadanie** i liczy jego
+odpowiedź z tych samych liczb, które wypisał:
 
 ```python
-def dodawanie(r, n, lo, hi):
-    for _ in range(n):
-        a, b = r.randint(lo, hi), r.randint(lo, hi)
-        yield f"${fmt(a)} + {fmt(b)}$", fmt(a + b)
+def dodawanie(r, lo, hi):
+    a, b = r.randint(lo, hi), r.randint(lo, hi)
+    return f"${fmt(a)} + {fmt(b)}$", fmt(a + b)
 ```
 
 Potem dopisz zestaw do listy `SETS`:
 
 ```python
-("15-nowy", "Tytuł zestawu", 2, "4:00", 3, 1015,
- lambda r: list(dodawanie(r, 30, 101, 999))),
+("26-nowy", "Tytuł zestawu", 2, "4:00", 3, 1026,
+ lambda r: distinct(N, lambda: dodawanie(r, 101, 999))),
 ```
 
 Kolumny: `(nazwa pliku, tytuł, gwiazdki, cel czasowy, liczba kolumn, seed, builder)`.
 
-**Seed musi być nowy i stały.** Książka ma być identyczna przy każdym buildzie
-— inaczej czytelnik nie porówna dzisiejszego czasu z zeszłotygodniowym.
+`distinct(N, ...)` losuje aż uzbiera `N` **różnych** zadań — przy czterdziestu
+losowaniach powtórki są prawie pewne, a powtórka w zestawie wygląda jak błąd
+druku. Jeśli zakres buildera jest węższy niż `N`, `distinct` przerwie build
+z komunikatem, zamiast kręcić się w kółko.
+
+**Długość zestawu to `N`, jedna stała na górze pliku.** Nie wpisuj liczby
+zadań w pojedynczy zestaw — dwa czasy da się porównać tylko wtedy, gdy zestawy
+mierzą tę samą pracę.
+
+**Seed musi być nowy i stały.** Zmiana seeda po cichu podmienia czterdzieści
+zadań, więc czytelnik porównuje wtedy dwa różne zestawy. Zmiana nazwy pliku
+i kolejności na liście jest darmowa; zmiana seeda nie.
 
 **Dzielenie buduj od ilorazu**, nie losuj dzielnej i dzielnika osobno, bo
 wyjdzie reszta:
 
 ```python
 b, q = r.randint(blo, bhi), r.randint(qlo, qhi)
-yield rf"${fmt(b * q)} \div {fmt(b)}$", fmt(q)
+return rf"${fmt(b * q)} \div {fmt(b)}$", fmt(q)
 ```
+
+**Bez `\sqrt` i `\frac`.** Oba są wyższe niż `\strut`, który ustala rytm
+wierszy, więc zestaw z nich zbudowany oddycha inaczej niż wszystkie pozostałe.
+Jeśli działanie trzeba nazwać — nazwij je słowem (`pierwiastek z $169$`).
 
 Potem `make sets && make book`.
 
@@ -81,11 +94,22 @@ końcu sama — nie ma osobnej listy do zaktualizowania.
 ```latex
 \begin{zestaw}{Tytuł}{2}{5:00}{2}
   \z{...}{...}
+  \btnc              % koniec pierwszej kolumny
+  \z{...}{...}
 \end{zestaw}
 ```
 
 Argumenty: tytuł, gwiazdki, cel czasowy, liczba kolumn. Potem dopisz
 `\input{sets/nazwa}` w `book/structure.tex`.
+
+**`\btnc` mówi, gdzie kończy się kolumna** — przy `n` kolumnach potrzeba
+`n-1` takich znaczników, rozłożonych równo. Zestaw jest jednym nierozrywalnym
+pudełkiem (dlatego nie ma tu `multicols`), więc podziału nie zrobi za Ciebie
+składacz.
+
+**Zestaw musi się zmieścić na stronie.** Nagłówek i stopka mają etykiety, a
+build przerywa się błędem `Zestaw N is split`, jeśli wypadną na różnych
+stronach. Za długi zestaw skróć albo daj mu więcej kolumn.
 
 ## Zasady, których bramki nie sprawdzą
 
@@ -118,7 +142,9 @@ make book      # build + bramki
 - **`errors`, `unresolved refs`, `overfull hbox/vbox`** — zerowe. Przepełnione
   pudełko znaczy, że coś wystaje poza kolumnę; najczęściej zadanie za szerokie
   na `\z` i powinno być `\zz`.
-- **`STALE`** — zapomniałeś `make sets`.
+- **`STALE`** — zapomniałeś `make sets` (albo zostawiłeś w
+  `book/sets/generated/` plik, którego generator już nie tworzy).
+- **`Zestaw N is split`** — zestaw nie mieści się na stronie.
 
 **Nie ufaj kodowi wyjścia `latexmk`.** Przy `nonstopmode` nieudany przebieg i
 tak zapisuje PDF. Bramką jest `tools/checklog.py`.

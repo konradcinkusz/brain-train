@@ -8,12 +8,12 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 
 | | Done | Remaining |
 |---|---|---|
-| Book (A4) | 18 sets, 434 exercises, front matter, TOC, answer appendix | — |
-| Build | `make book`, two gates, CI on every push and PR, tag-driven release | — |
+| Book (A4) | 29 sets, 1064 exercises, front matter, TOC, answer appendix | — |
+| Build | `make book`, three gates, CI on every push and PR, tag-driven release | — |
 | Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
 | Docs | README, `CONTRIBUTING.md`, this file | — |
 
-The book is **16 pages, 18 sets, 434 exercises, zero errors, zero unresolved
+The book is **27 pages, 29 sets, 1064 exercises, zero errors, zero unresolved
 references, zero overfull boxes**.
 
 **Re-measure those numbers from the build in front of you.** Page counts and
@@ -24,9 +24,11 @@ being carried across a change.
 
 ## What this book is
 
-A **drill book**. The unit is a **set**: ~30 short exercises listed one under
-another on a page, done in one go against a stopwatch, scored as a whole. Every
-answer is in one appendix at the **back**.
+A **drill book**. The unit is a **set**: a page of short exercises listed one
+under another, done in one go against a stopwatch, scored as a whole. Every
+answer is in one appendix at the **back**. Every arithmetic set is the same
+length -- the count lives in `N` in `tools/gen_sets.py` and nowhere else --
+because two times only compare if they measure the same work.
 
 **What it measures is throughput, not the correctness of any one exercise.** How
 many you got through, how fast, and whether that improves when you come back to
@@ -42,7 +44,7 @@ It was carefully built and it was the wrong shape for this book. That layout
 exists to teach a step. Here it put **two exercises on a page**, made the page
 ceremony rather than work, and dropped an answer into the middle of a run the
 reader is being timed on. 52 exercises took 26 pages; the same book now carries
-434 in 16.
+over a thousand in 27.
 
 Nothing of it is kept. It is in `deck-archive/` with its own note.
 
@@ -62,7 +64,20 @@ v1.0.0 shipped with no PDF (#21).
 
 **`book/sets/generated/` is generated. Do not edit it.** It comes from
 `tools/gen_sets.py`; edit the generator and run `make sets`. `make drift` fails
-when the two disagree, and CI runs it before the build.
+when the two disagree, and CI runs it before the build. It fails on a file the
+generator no longer produces, too: renaming a set otherwise leaves the old one
+in the tree, out of `_all.tex` and out of `SETS`, where nothing looks at it
+again and it still reads like a set the book contains.
+
+**No two exercises in a set are the same.** Forty draws from the sixty-four
+multiplication-table pairs collide about nine times; `distinct()` in the
+generator is what stops it, and its attempt bound is what makes a builder whose
+range is too narrow fail loudly instead of spinning forever.
+
+**A seed belongs to a set forever.** Reordering and renaming the `SETS` list is
+free. Changing a seed silently replaces forty exercises, and a reader comparing
+this month's time against last month's is then comparing two different sets --
+which is the one thing this book exists to make possible.
 
 **Arithmetic is generated; puzzles are not.** The book is scored on volume, and
 several hundred hand-typed sums is where arithmetic slips hide — the generator
@@ -95,8 +110,24 @@ Everything below is in `book/preamble.tex` beside the code it governs.
   more, so nothing needs room out there.
 
 - **Stars and the target time print once, at the head of the set.** They are
-  properties of the set, not of an exercise. Repeating them thirty times a page
-  would be noise that costs exercises.
+  properties of the set, not of an exercise. Repeating them on every line would
+  be noise that costs exercises.
+
+- **A set is one unbreakable block, and columns are boxes rather than
+  `multicols`.** multicol cannot be put in a box -- it refuses -- so a set built
+  with it is always splittable, and once sets reached forty exercises the page
+  breaks started landing between the last exercise and the Czas / Poprawne /
+  Data box. That box is the product; on the far side of a page turn it is
+  useless. A set is now a row of minipages, which is one horizontal box and
+  cannot break, with `\nobreak` before every internal `\vspace` in the head and
+  foot -- **`\par\vspace{4pt}` puts glue straight after a line box, which is a
+  legal breakpoint, and that is the one the page-breaker actually took.** The
+  generator emits `\btnc` where each column ends, which also balances them
+  exactly (14/13/13, against multicol's 14/14/12 under `\raggedcolumns`).
+
+- **The answer appendix boxes each set's block too.** A page that begins in the
+  middle of a list begins with numbers and no heading, and this appendix is a
+  lookup table.
 
 - **Answers reach the back through a global macro store**, not the `.aux`.
   Material written to an aux-style file is expanded at shipout, where a fragile
@@ -128,8 +159,6 @@ Everything below is in `book/preamble.tex` beside the code it governs.
   was bitten by that twice; a `bt` prefix marks a macro internal without needing
   a catcode change.
 
-- **A one-column set does not open `multicols`.** multicol warns at one column
-  and is right to: a one-column set is a plain list.
 
 ## Traps already hit
 
@@ -156,7 +185,9 @@ Everything below is in `book/preamble.tex` beside the code it governs.
 ## Prove a new check fires before trusting it
 
 `make drift` was verified by editing the generator without regenerating
-(`STALE`, exit 1). A check that has never failed may be measuring nothing.
+(`STALE`, exit 1). The split-set check was verified by putting a `\newpage`
+between a set's grid and its foot: every set reported `Zestaw N is split`, and
+`make book` exited 1. A check that has never failed may be measuring nothing.
 
 **And retire a check that has stopped measuring.** `checkbadges.py` guarded
 frame numbers in the outer margin. There are no margin numbers now, so it would
