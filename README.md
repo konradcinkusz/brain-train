@@ -12,11 +12,11 @@
 [![Build book](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml/badge.svg)](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml "Build book")
 
 Zbiór krótkich zadań na czas — arytmetyka, kolejność działań, zagadki logiczne,
-ciągi liczbowe i wyzwania mieszane. Format inspirowany serią *Trening Mózgu*
+ciągi liczbowe, wyzwania mieszane i szybkie triki rachunkowe. Format inspirowany serią *Trening Mózgu*
 i programowanym układem Strouda: jedno zadanie na **ramkę**, stoper, porównanie
 z limitem. Bez kalkulatora.
 
-**44 zadania · 5 obszarów · 23 strony A4.**
+**52 zadania · 6 obszarów · 26 stron A4.**
 
 ## Quick start
 
@@ -66,12 +66,13 @@ odpowiedź, bo czytelnik jej nie widzi, dopóki nie przewinie. Strona nie może.
 
 ```
 .
-├── areas/                             # ŹRÓDŁO zadań (44 w pięciu obszarach)
+├── areas/                             # ŹRÓDŁO zadań (52 w sześciu obszarach)
 │   ├── 1-arytmetyka-podstawy.tex     # Dodawanie, odejmowanie, mnożenie, dzielenie
 │   ├── 2-kolejnosc-dzialan.tex       # Nawiasy, priorytety, potęgi
 │   ├── 3-zagadki-logiczne.tex        # Sylogizmy, pułapki słowne, dedukcja
 │   ├── 4-ciagi-i-wzorce.tex          # Ciągi liczbowe i literowe
-│   └── 5-mieszane-wyzwania.tex       # Prędkość, procenty, finanse, praca
+│   ├── 5-mieszane-wyzwania.tex       # Prędkość, procenty, finanse, praca
+│   └── 6-szybkie-triki.tex           # Skróty rachunkowe: ×11, kwadraty, procenty
 ├── book/                              # KSIĄŻKA A4 (układ Stroudowski)
 │   ├── main-pl-a4.tex                # Plik główny — cienki, format jest w preambule
 │   ├── preamble.tex                  # Ramki, odpowiedzi, numery na marginesie
