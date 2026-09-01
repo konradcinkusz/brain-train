@@ -154,6 +154,26 @@ identical to a real one.
 
 ---
 
+## Releasing, and the one thing a web session cannot do
+
+**A tag cannot be pushed from a Claude Code web session.** `git push origin
+<tag>` returns HTTP 403 through the sandbox's git proxy, and every release tool
+available there is read-only, so a session can prepare a release and cannot cut
+one. Tag from a local clone:
+
+```bash
+git checkout main && git pull
+git tag -a v2.0.0 -m "..." && git push origin v2.0.0
+```
+
+The tag is the only manual step. `ci.yml` does the rest and cannot publish an
+empty release: the artifact upload is `if-no-files-found: error`, the release
+step is `fail_on_unmatched_files`, and a `test -s` stands between them.
+
+**Verify a release by looking at its assets, not at the workflow going green.**
+v1.0.0 is the worked example of why — it exists, it is not a draft, and it
+carries nothing.
+
 ## Build
 
 ```bash
