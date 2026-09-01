@@ -8,13 +8,13 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 
 | | Done | Remaining |
 |---|---|---|
-| Book (A4) | 85 sets, 3304 exercises, three difficulty blocks, front matter, TOC, answer appendix | — |
-| Build | `make book`, four gates, CI on every push and PR, tag-driven release | — |
+| Book (A4) | 88 sets, 3424 exercises, three difficulty blocks, a 13-week plan, front matter, TOC, answer appendix | — |
+| Build | `make book`, six gates, CI on every push and PR, tag-driven release | — |
 | Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
 | Docs | README, `CONTRIBUTING.md`, this file | — |
 
-The book is **66 pages, 85 sets, 3304 exercises, zero errors, zero unresolved
-references, zero overfull boxes**.
+The book is **76 pages, 88 sets, 3424 exercises, 91 planned days, zero errors,
+zero unresolved references, zero overfull boxes**.
 
 **Re-measure those numbers from the build in front of you.** Page counts and
 the overfull multiset are functions of the layout constants and do not survive
@@ -145,6 +145,62 @@ addition sets on six consecutive days. Blocked practice reads as faster while
 you do it and is worse a week later, which is the same finding this book's
 front matter already carries about rereading.
 
+## The plan, and why it is generated
+
+`tools/gen_plan.py` lays the book's sets over 91 days. It is generated for the
+same reason the arithmetic is: a plan is 91 rows each naming a set BY THE
+NUMBER IT CARRIES IN THE BOOK, and typed by hand that is 91 chances to name a
+set that moved -- each of which prints without complaint. A plan that sends the
+reader to Zestaw 41 on a Tuesday is wrong in a way no build can see.
+
+**The schedule stands on three things, none of them invented here.**
+Progressive overload (four weeks of Blok I, five of Blok II, four of Blok III),
+interleaving (no two consecutive days drill the same family), and spacing
+(every day after the first week re-does the set from seven days earlier). The
+front matter says in as many words that these are findings about practice and
+**not** a measurement of this book, because nobody has worked the plan.
+
+**Every seventh day is a benchmark**, and the benchmark sets are the only ones
+in the book with five scoring rows instead of one. One per block rather than
+one for the book: a benchmark is informative over material the reader is
+drilling this month, and an easy mixed set re-done in week 13 measures how
+bored they were.
+
+### The two things the plan generator gets right that a person would not
+
+**`select()` before `interleave()`.** A phase has more sets than days, so some
+are unused. Interleaving first and taking the front drops the TAIL, and the
+tail of a greedy interleave is the small families -- the one set of roman
+numerals, the one on means -- while a third set of two-digit addition stays in.
+Round-robin by family until the quota is full, so what falls out is the
+redundant copy. The spares are printed in the book rather than hidden.
+
+**A family is what the reader is DRILLING.** Two sets share one only if doing
+either instead of the other is the same practice, which is why the reversed
+percentage, the difference of squares and remainder-with-quotient are families
+of their own. Getting this wrong does not break anything; it quietly drops a
+skill from the plan.
+
+### The numbering assertion
+
+`book_order()` computes a set's number from its position in the generator's
+lists. The reader's number comes from a counter stepping through
+`structure.tex`. **Those are the same thing worked out twice and nothing made
+them agree** -- reorder a chapter and every row of the plan points one set off,
+silently, with every other gate green.
+
+So the generated include lists emit `\btexpect{n}` before each `\input`, and a
+set that comes up under any other number stops the build, naming the file and
+the line. A set reached with no expectation at all is an error too, which is
+what makes an `\input` added straight to `structure.tex` fail rather than slip
+past. Both branches were verified by mutation.
+
+**A check that lives where the mistake happens beats one that reads a file
+afterwards.** The first design wrote a manifest at shipout and compared it in
+Python; it needed a build to have run, it needed the titles to survive
+`\write` through inputenc, and it reported the failure two steps away from the
+cause.
+
 ## The layout, and why its numbers are what they are
 
 Everything below is in `book/preamble.tex` beside the code it governs.
@@ -226,9 +282,9 @@ Everything below is in `book/preamble.tex` beside the code it governs.
 
 ---
 
-## The four gates
+## The gates
 
-Three are in `tools/` and one is in the preamble. They are listed in the README
+Four are in `tools/` and two are in the preamble. They are listed in the README
 for a reader; what belongs here is what each one CANNOT see, because that is
 what the next one is for.
 
@@ -251,8 +307,11 @@ what the next one is for.
   still understands. Adding a builder therefore means adding its shape to
   `RULES`, and that is the price of the check meaning anything.
 
-- **The split-set check** lives in `preamble.tex`, because it needs page
-  numbers that only exist during the run.
+- **`gen_plan.py --check`** compares the plan against the sets it names. It
+  cannot see whether the book agrees about the numbering, which is what
+  `\btexpect` is for.
+- **The numbering assertion** and **the split-set check** both live in
+  `preamble.tex`, because both need numbers that exist only during the run.
 
 ## Prove a new check fires before trusting it
 
@@ -299,14 +358,21 @@ carries nothing.
 ## Build
 
 ```bash
-make book      # build + all three gates
-make sets      # regenerate the drill sets
+make book      # build + every gate
+make sets      # regenerate the drill sets AND the plan
+make plan      # the plan alone
 make drift     # are they in sync?
+make answers   # re-compute every printed answer from its printed question
 make clean
 ```
 
 After any change: `make clean && make book`, and re-read the page count and the
 overfull multiset rather than carrying the old ones across.
+
+`make sets` regenerates the plan as well, always. The plan is a pure function
+of the set list, so a regenerated list with a stale plan is a plan pointing at
+the wrong sets -- and `\btexpect` would catch it, but as a build failure rather
+than as the one-command fix it is.
 
 ---
 

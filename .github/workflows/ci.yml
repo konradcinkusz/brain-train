@@ -51,6 +51,9 @@ jobs:
       - name: Generated sets are up to date
         run: python3 tools/gen_sets.py --check
 
+      - name: The plan matches the sets it names
+        run: python3 tools/gen_plan.py --check
+
       - name: Every printed answer re-computed from its printed question
         run: python3 tools/checkanswers.py
 

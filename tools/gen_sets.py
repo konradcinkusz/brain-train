@@ -46,7 +46,7 @@ HEADER = """\
 %  Seed {seed}; regenerate with `make sets`.
 % ======================================================
 
-\\begin{{zestaw}}{{{title}}}{{{stars}}}{{{target}}}{{{cols}}}
+\\begin{{zestaw}}{opt}{{{title}}}{{{stars}}}{{{target}}}{{{cols}}}
 {body}\\end{{zestaw}}
 """
 
@@ -639,6 +639,7 @@ class Set(NamedTuple):
     family: str      # what it drills, for the plan's interleaving
     build: Callable
     wide: bool = False   # \zz rather than \z: a question that needs the width
+    rows: int = 1        # scoring rows under the set; >1 for a set done again
 
 
 SETS = [
@@ -745,7 +746,7 @@ SETS = [
         lambda r: distinct(N, lambda: dzielenie(r, 3, 12, 11, 40))),
     Set("42-triki-mnozenia-b", "Mnożenie na skróty II", 2, 2, 6.75, 3, 1123, "triki",
         lambda r: distinct(N, lambda: triki(r))),
-    Set("43-roznica-kwadratow", "Para wokół okrągłej", 2, 2, 7, 3, 1124, "kwadraty",
+    Set("43-roznica-kwadratow", "Para wokół okrągłej", 2, 2, 7, 3, 1124, "roznica-kwadratow",
         lambda r: distinct(N, lambda: roznica_kwadratow(r))),
     Set("44-procenty-b", "Procenty w pamięci II", 2, 2, 8, 3, 1125, "procenty",
         lambda r: distinct(N, lambda: procenty(r))),
@@ -767,9 +768,9 @@ SETS = [
         lambda r: distinct(N, lambda: trzy_skladniki(r))),
     Set("53-podzielnosc", "Podzielność", 2, 2, 7, 2, 1134, "podzielnosc",
         lambda r: distinct(N, lambda: podzielnosc(r)), True),
-    Set("54-procent-ile", "Ile to procent", 2, 2, 9, 2, 1135, "procenty",
+    Set("54-procent-ile", "Ile to procent", 2, 2, 9, 2, 1135, "procent-ile",
         lambda r: distinct(N, lambda: procent_ile(r)), True),
-    Set("55-dzielenie-reszta", "Dzielenie z resztą", 2, 2, 9, 2, 1136, "reszty",
+    Set("55-dzielenie-reszta", "Dzielenie z resztą", 2, 2, 9, 2, 1136, "dzielenie-reszta",
         lambda r: distinct(N, lambda: dzielenie_reszta(r))),
     Set("56-rzymskie", "Liczby rzymskie", 2, 2, 7, 2, 1137, "rzymskie",
         lambda r: distinct(N, lambda: rzymskie(r))),
@@ -814,7 +815,7 @@ SETS = [
         lambda r: distinct(N, lambda: dodawanie(r, 1001, 8999))),
     Set("66-odejmowanie-4c", "Odejmowanie czterocyfrowe", 3, 3, 12, 3, 1141, "odejmowanie",
         lambda r: distinct(N, lambda: odejmowanie(r, 1001, 8999))),
-    Set("67-kwadraty-konc5", "Kwadraty piątek", 3, 3, 10, 3, 1142, "kwadraty",
+    Set("67-kwadraty-konc5", "Kwadraty piątek", 3, 3, 10, 3, 1142, "kwadraty-5",
         lambda r: kwadraty_konc5(r, N)),
     Set("68-mnozenie-2x2-b", "Mnożenie dwucyfrowe II", 3, 3, 15, 3, 1143, "mnozenie",
         lambda r: distinct(N, lambda: mnozenie(r, 12, 49, 12, 49))),
@@ -832,9 +833,9 @@ SETS = [
         lambda r: distinct(N, lambda: dziesietne_mnozenie(r))),
     Set("75-kolejnosc-nawiasy", "Nawiasy i potęgi", 3, 3, 14, 2, 1150, "kolejnosc",
         lambda r: distinct(N, lambda: kolejnosc_nawiasy(r))),
-    Set("76-procent-bazy", "Procent — szukana całość", 3, 3, 10, 2, 1151, "procenty",
+    Set("76-procent-bazy", "Procent — szukana całość", 3, 3, 10, 2, 1151, "procent-bazy",
         lambda r: distinct(N, lambda: procent_bazy(r)), True),
-    Set("77-podwyzki", "Podwyżki i obniżki", 3, 3, 10, 2, 1152, "procenty",
+    Set("77-podwyzki", "Podwyżki i obniżki", 3, 3, 10, 2, 1152, "podwyzki",
         lambda r: distinct(N, lambda: podwyzki(r)), True),
     Set("78-dzielenie-4c", "Dzielenie czterocyfrowe", 3, 3, 13, 3, 1153, "dzielenie",
         lambda r: distinct(N, lambda: dzielenie(r, 3, 12, 101, 799))),
@@ -850,9 +851,103 @@ SETS = [
             lambda: kolejnosc_nawiasy(r),
             lambda: dziesietne(r),
         ])),
+
+    # ---------------------------------------------------------------
+    #  Pomiary kontrolne -- one per block, and the only sets in the book
+    #  designed to be done REPEATEDLY. Each carries five scoring rows
+    #  instead of one, because a single measurement of anything says
+    #  nothing and this book's whole argument is the second measurement.
+    #
+    #  One per block rather than one for the book: a benchmark is only
+    #  informative over material the reader is actually drilling that
+    #  month, and an easy mixed set re-done in week 13 measures how bored
+    #  they were rather than how fast they got.
+    # ---------------------------------------------------------------
+    Set("82-kontrolny-1", "Pomiar kontrolny I", 5, 1, 5.5, 3, 1157, "kontrolny",
+        lambda r: mieszane(r, [
+            lambda: dodawanie(r, 11, 99),
+            lambda: odejmowanie(r, 11, 99),
+            lambda: mnozenie(r, 2, 9, 2, 9),
+            lambda: dzielenie(r, 2, 9, 2, 9),
+        ]), rows=5),
+    Set("83-kontrolny-2", "Pomiar kontrolny II", 5, 2, 9, 3, 1158, "kontrolny",
+        lambda r: mieszane(r, [
+            lambda: dodawanie(r, 101, 899),
+            lambda: mnozenie(r, 12, 99, 3, 9),
+            lambda: procenty(r),
+            lambda: reszty(r),
+            lambda: czesci(r),
+        ]), rows=5),
+    Set("84-kontrolny-3", "Pomiar kontrolny III", 5, 3, 14, 2, 1159, "kontrolny",
+        lambda r: mieszane(r, [
+            lambda: mnozenie(r, 12, 49, 12, 49),
+            lambda: dzielenie(r, 3, 12, 11, 40),
+            lambda: procenty_trudne(r),
+            lambda: kolejnosc(r),
+            lambda: dziesietne(r),
+        ]), rows=5),
 ]
 
-BLOCK_TITLES = {1: "Fundament", 2: "Tempo", 3: "Wyzwanie"}
+
+class Hand(NamedTuple):
+    """A hand-written set. The generator never writes one and never reads its
+    exercises -- what it needs is the METADATA, because the plan lays days over
+    the whole book and a day that names a puzzle set has to name it correctly.
+
+    Keeping this list here rather than in the plan is the same argument the
+    include list has always made: two lists of the book's contents drift, and
+    the one nobody builds from drifts silently."""
+    name: str        # file stem under book/sets/
+    title: str
+    stars: int
+    target: str      # its own, in mm:ss -- these are not N exercises long
+    family: str
+    count: int       # exercises, for the plan to be honest about the session
+
+
+HAND = [
+    Hand("20-zagadki", "Zagadki logiczne", 2, "15:00", "zagadki", 16),
+    Hand("21-ciagi", "Ciągi i wzorce", 2, "10:00", "ciagi", 16),
+    Hand("22-mieszane", "Wyzwania mieszane", 3, "18:00", "wyzwania", 16),
+    Hand("23-triki", "Szybkie triki", 2, "9:00", "triki-reczne", 16),
+]
+
+# The chapters, in the order the book prints them. A set's NUMBER is its
+# position in this order, which is why the plan cannot compute one without it.
+BLOCK_TITLES = {1: "Fundament", 2: "Tempo", 3: "Wyzwanie",
+                4: "Łamigłówki", 5: "Pomiary kontrolne"}
+
+
+class Item(NamedTuple):
+    """One set as the plan sees it: a number, a name and how long it should
+    take. Generated and hand-written sets differ in everything else and in
+    none of this."""
+    num: int
+    name: str
+    title: str
+    stars: int
+    target: str
+    family: str
+    block: int
+    count: int
+
+
+def book_order() -> list[Item]:
+    """Every set in the book, numbered as the reader will see it numbered.
+
+    The `zestaw` counter is global and steps once per set in file order, so
+    this list and the printed numbers are the same thing computed twice -- and
+    that is exactly why nothing else may hold a second copy of the order.
+    """
+    out, n = [], 0
+    for b in sorted(BLOCK_TITLES):
+        pool = HAND if b == 4 else [s for s in SETS if s.block == b]
+        for x in pool:
+            n += 1
+            out.append(Item(n, x.name, x.title, x.stars,
+                            x.target if isinstance(x, Hand) else target(x.secs),
+                            x.family, b, x.count if isinstance(x, Hand) else N))
+    return out
 
 
 def render(s: Set) -> str:
@@ -874,7 +969,8 @@ def render(s: Set) -> str:
         at += count
 
     return HEADER.format(seed=s.seed, title=s.title, stars=s.stars,
-                         target=target(s.secs), cols=s.cols, body=body)
+                         target=target(s.secs), cols=s.cols, body=body,
+                         opt="" if s.rows == 1 else f"[{s.rows}]")
 
 
 def audit() -> None:
@@ -895,6 +991,13 @@ def audit() -> None:
         if dupes:
             raise SystemExit(f"gen_sets: repeated {what}(s): "
                              + ", ".join(str(d) for d in sorted(dupes)))
+    # A hand-written set is named here and written by a person, so the one
+    # thing this can check is that the file the include list will point at
+    # actually exists -- otherwise the failure is a LaTeX error naming a path.
+    for h in HAND:
+        if not (ROOT / "book" / "sets" / f"{h.name}.tex").exists():
+            raise SystemExit(f"gen_sets: HAND names {h.name}.tex, "
+                             f"which is not in book/sets/")
 
 
 def main() -> int:
@@ -920,12 +1023,21 @@ def main() -> int:
     # The include lists are generated too, one per block, because a block is a
     # chapter: a set added to SETS and forgotten in structure.tex is a set
     # nobody ever sees, and every other check passes.
-    lists = {}
+    # Each \input is preceded by the number the set will carry, and the set
+    # refuses to typeset under any other one. That is what lets the plan print
+    # `Zestaw 41` as a literal: the number it computes and the number LaTeX
+    # steps to are the same thing worked out twice, and reordering a chapter in
+    # structure.tex would otherwise send every row of the plan one set off,
+    # silently, with every other gate green.
+    lists, order = {}, {i.name: i.num for i in book_order()}
     for b in sorted(BLOCK_TITLES):
+        pool = ([(h.name, f"sets/{h.name}") for h in HAND] if b == 4
+                else [(s.name, f"sets/generated/{s.name}")
+                      for s in SETS if s.block == b])
+        body = "".join(f"\\btexpect{{{order[n]}}}\\input{{{path}}}\n"
+                       for n, path in pool)
         lists[f"_blok-{b}.tex"] = (
-            "% GENERATED by tools/gen_sets.py -- do not edit.\n"
-            + "".join(f"\\input{{sets/generated/{s.name}}}\n"
-                      for s in SETS if s.block == b))
+            "% GENERATED by tools/gen_sets.py -- do not edit.\n" + body)
     for fname, text in lists.items():
         dest = OUT / fname
         cur = dest.read_text(encoding="utf8") if dest.exists() else None
@@ -955,10 +1067,13 @@ def main() -> int:
         print(f"\n{len(stale)} generated file(s) out of date. Run `make sets`.")
         return 1
 
-    for b, t in BLOCK_TITLES.items():
-        n = sum(1 for s in SETS if s.block == b)
-        print(f"  blok {b} {t:<12} {n:>3} sets, {n * N:>5} exercises")
-    print(f"  {'':<19}{len(SETS):>3} sets, {total:>5} exercises")
+    order = book_order()
+    for b, name in BLOCK_TITLES.items():
+        xs = [i for i in order if i.block == b]
+        print(f"  blok {b} {name:<18} zestawy {xs[0].num:>2}-{xs[-1].num:<3}"
+              f" {len(xs):>3} sets, {sum(i.count for i in xs):>5} exercises")
+    print(f"  {'':<25}{len(order):>13} sets, "
+          f"{sum(i.count for i in order):>5} exercises")
     return 0
 
 
