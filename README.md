@@ -82,6 +82,7 @@ odpowiedź, bo czytelnik jej nie widzi, dopóki nie przewinie. Strona nie może.
 │   ├── convert_deck.py               # areas/ → book/chapters/
 │   ├── checklog.py                   # Bramka logu (nie kod wyjścia!)
 │   └── checkbadges.py                # Numery ramek na właściwym marginesie
+├── deck-archive/                      # Prezentacja Beamer — zarchiwizowana, nie budowana
 ├── .github/workflows/
 │   ├── build.yml                     # Build książki na każdy push i PR
 │   └── ci.yml                        # Build + wydanie PDF na tag v*/V*
@@ -118,6 +119,14 @@ Obie bramki czytające PDF sprawdzono, wprowadzając defekt, którego pilnują �
 sprawdzenie, które nigdy nie zawiodło, może nie mierzyć niczego.
 
 <p align="right">(<a href="#readme-top">wróć na górę</a>)</p>
+
+### Dlaczego zadania mieszkają w `areas/`, a nie w `book/chapters/`
+
+W `areas/` zadanie stoi obok **swojej własnej** odpowiedzi — tak się o zadaniu
+myśli. W książce odpowiedź otwiera ramkę *następną*, więc leży przy zadaniu
+**kolejnym**. Pisanie wprost w formacie książki znaczyłoby przesuwanie każdej
+odpowiedzi o jedno miejsce ręcznie; `tools/convert_deck.py` robi to za Ciebie i
+`make drift` pilnuje, żeby obie strony się nie rozjechały.
 
 ## Wydanie PDF
 

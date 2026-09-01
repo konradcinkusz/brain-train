@@ -10,8 +10,8 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 |---|---|---|
 | Book (A4, Stroud) | Frame machinery, all 38 exercises, front matter, TOC, chapter frame ranges | A sixth area (#13); difficulty balance (#10, #11) |
 | Build | `make book`, three gates, CI on every push and PR, tag-driven release | — |
-| Deck (Beamer) | Source intact | **Does not build** (#21); its fate is #16 |
-| Docs | README | `CONTRIBUTING.md` (#12) |
+| Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
+| Docs | README, `CONTRIBUTING.md`, this file | — |
 
 The book is **20 pages, 43 frames, zero errors, zero unresolved references,
 zero overfull boxes**, with all 43 margin badges in the correct outer margin.
@@ -54,10 +54,14 @@ PDF, and with `-file-line-error` an error line begins with a path rather than
 v1.0.0 shipped with no PDF (#21).
 
 **`book/chapters/` is generated. Do not edit it.** It comes from `areas/` via
-`tools/convert_deck.py`; edit the deck source and run `make convert`.
-`make drift` fails when the two disagree, and CI runs it before the build.
-This holds only while both formats exist — if #16 retires the deck, the
-generator and the gate go with it.
+`tools/convert_deck.py`; edit `areas/` and run `make convert`. `make drift`
+fails when the two disagree, and CI runs it before the build.
+
+The generator survived #16 retiring the deck, and the reason is worth keeping:
+in `areas/` an exercise sits beside **its own** answer, while in the book the
+answer opens the *next* frame and so sits beside the *next* exercise. Authoring
+straight into the book format means shifting every answer by one by hand. The
+converter does that shift; the gate proves it was not skipped.
 
 **A digit stays a digit, and diacritics are copied as found.** The deck mixes
 UTF-8 (`Kolejność`) with TeX escapes (`Mno\. zenie`); both reach the same glyph
@@ -155,7 +159,6 @@ identical to a real one.
 make book      # build + all three gates
 make convert   # areas/ -> book/chapters/
 make drift     # are they in sync?
-make deck      # the Beamer deck (currently broken, #21)
 make clean
 ```
 
@@ -166,11 +169,13 @@ overfull multiset rather than carrying the old ones across.
 
 ## Open decisions, not to be re-litigated from a search result
 
-- **#16 — does the book replace the deck, or generate it?** Not decided. Until
-  it is, both sources exist and `areas/` is authoritative for exercise content.
-  Note the evidence found in #21: the deck has never produced a working PDF.
-- **#8 — the year in the title.** `BrainTrain 2025` is still on the README's H1
-  in late 2026. Year-agnostic is the cheap option; annual editions is a real
-  commitment. The release asset name is already year-agnostic, so the decision
-  lands in one place.
-- **#13 — a sixth area**, authored as frames, shipped as v2.0.0.
+- **#13 — a sixth area**, authored in `areas/`, shipped as v2.0.0.
+
+Two decisions are CLOSED and should not be re-litigated from a search result:
+
+- **#16 — the book is what this repository publishes.** The deck is archived
+  under `deck-archive/` and not built. It never built: its only CI run failed
+  and v1.0.0 shipped with no assets (#21). `areas/` remains the authoring
+  source for the reason given above.
+- **#8 — the title carries no year.** `BrainTrain 2025` read as abandoned in
+  late 2026. Adding a year back is one line in three places if that changes.
