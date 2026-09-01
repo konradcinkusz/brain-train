@@ -200,50 +200,65 @@
 % one piece -- the grid above it is already a single unbreakable box, so with
 % this the whole set moves as a unit.
 %
-% #1 IS HOW MANY TIMES THE SET WILL BE SCORED. One is every drill set: you do
-% it, you time it, and if you come back to it you compare against what you
-% wrote. The benchmark sets take five, because they exist to be repeated on a
-% schedule and five measurements in five separate places is five measurements
-% nobody can lay side by side.
+% #1 IS HOW MANY TIMES THE SET WILL BE SCORED, AND THE DEFAULT IS TWO.
+%
+% It was one, and that was a hole in the design rather than a saving. The book
+% has always told the reader to come back to a set after a week and compare --
+% it is the reason there is a date box at all -- and then gave them one line to
+% write on. The plan makes the hole acute: it schedules that repeat on a named
+% day for seventy-two of the sets, and the second measurement had nowhere to go
+% except a page it could not be compared against.
+%
+% The benchmark sets take five, because they are done weekly for a month.
+%
+% The rules line up across rows without a tabular: every row is the same three
+% fields separated by \hfill in a box of the same width, so the columns are a
+% consequence of the geometry rather than something to declare.
 \newcounter{btrow}
-\newcommand{\btonerow}[1]{%
-  {\color{btgrey}#1.} & \rule[-0.4ex]{5.5em}{0.4pt}
-  & \rule[-0.4ex]{2.5em}{0.4pt}\,/\,\thezad
-  & \rule[-0.4ex]{5.5em}{0.4pt} \\[3.5pt]}
+% THE GLUE AND ITS \nobreak GO BEFORE THE LINE, NEVER AFTER IT.
+%
+% After it, the last row of every foot ends with \nobreak, the next set's head
+% opens with one, and the chain runs the length of the book: TeX is left with
+% no legal breakpoint anywhere and sets the whole thing as one column. Measured,
+% because it was written the other way round first -- 30 pages instead of 86,
+% and eight overfull vboxes the tallest of which was seven metres.
+\newcommand{\btfootline}[1]{%
+  \ifnum#1>1\relax\par\nobreak\vspace{2.5pt}\fi
+  \par\noindent
+  % The split check's label rides on the FIRST row, in horizontal mode. Left in
+  % vertical mode it records the page TeX is on, which is the page the previous
+  % material went to -- so a foot that lands overleaf takes its own head's page
+  % number, the check compares a page against itself, and a set ships with its
+  % scoring box on the far side of a page turn. That is not hypothetical: this
+  % refactor did exactly that, with a green build, and the render found it.
+  \ifnum#1=1\relax\label{btsetfoot\thezestaw}\fi
+  {\color{btgrey}\footnotesize#1.}\ \ {\bfseries Czas:}~\rule[-0.4ex]{6em}{0.4pt}\hfill
+  {\bfseries Poprawne:}~\rule[-0.4ex]{3em}{0.4pt}\,/\,\thezad\hfill
+  {\bfseries Data:}~\rule[-0.4ex]{6em}{0.4pt}%
+  \par
+}
 
-% The rows are accumulated BEFORE the tabular is opened, never looped inside
-% it. A \loop in an alignment body does not survive scanning -- TeX needs to
-% see the & and the row break while it reads the cell, and a conditional hides
-% them. The symptom is an empty table and no error at all. A macro that
-% EXPANDS to cells is fine, which is why \btonerow is plain.
+% The lines are accumulated BEFORE anything is typeset. A \loop that emits
+% material directly is fine here, but the same pattern is needed the moment
+% this goes back inside an alignment -- a \loop in a tabular body does not
+% survive scanning, because TeX needs to see the & and the row break while it
+% reads the cell and a conditional hides them. The symptom is an empty table
+% and no error at all.
 \newcommand{\btfootbody}{}
 \newcommand{\btmakefootbody}[1]{%
   \renewcommand{\btfootbody}{}%
   \setcounter{btrow}{0}%
   \loop\ifnum\value{btrow}<#1\relax
     \stepcounter{btrow}%
-    \eappto\btfootbody{\noexpand\btonerow{\thebtrow}}%
+    \eappto\btfootbody{\noexpand\btfootline{\thebtrow}}%
   \repeat
 }
 
 \newcommand{\btsetfoot}[1]{%
   \par\nobreak\vspace{6pt}%
   \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\nobreak\vspace{4pt}%
-  \noindent
-  \ifnum#1=1\relax
-    {\bfseries Czas:}~\label{btsetfoot\thezestaw}\rule[-0.4ex]{6em}{0.4pt}\hfill
-    {\bfseries Poprawne:}~\rule[-0.4ex]{3em}{0.4pt}\,/\,\thezad\hfill
-    {\bfseries Data:}~\rule[-0.4ex]{6em}{0.4pt}%
-  \else
-    \label{btsetfoot\thezestaw}%
-    \btmakefootbody{#1}%
-    \small
-    \begin{tabular}{@{}r@{\ \ }l@{\quad}l@{\quad}l@{}}
-      & {\bfseries Czas} & {\bfseries Poprawne} & {\bfseries Data} \\[2pt]
-      \btfootbody
-    \end{tabular}%
-  \fi
-  \par
+  \btmakefootbody{#1}%
+  \btfootbody
 }
 
 % A SET THAT IS SPLIT IS A BUILD FAILURE, not something to catch by eye.
@@ -272,8 +287,9 @@
 
 % \begin{zestaw}[rows]{title}{stars}{target}{cols}
 %
-% The optional argument is the number of scoring rows and defaults to one, so
-% every set written before it existed calls this unchanged.
+% The optional argument is the number of scoring rows. TWO by default, because
+% the plan schedules a repeat of nearly every set and the reader needs both
+% times in one place; five for the benchmark sets, done weekly for a month.
 % THE NUMBER A SET COMES UP UNDER IS PART OF THE BOOK'S CONTRACT WITH THE PLAN.
 %
 % The plan prints `Zestaw 41` as a literal, computed by tools/gen_plan.py from
@@ -289,7 +305,7 @@
 \newcommand{\btexpectnum}{}
 \newcommand{\btexpect}[1]{\gdef\btexpectnum{#1}}
 
-\newenvironment{zestaw}[5][1]{%
+\newenvironment{zestaw}[5][2]{%
   \refstepcounter{zestaw}%
   \ifx\btexpectnum\empty
     \PackageError{trening-mozgu}{%
@@ -338,11 +354,29 @@
 % Every set's answers, in order, at the back. \ifcsdef rather than an assumed
 % range: a set that stored nothing prints nothing, instead of an empty heading
 % that reads like a missing page.
+% THE RUNNING HEAD CARRIES THE RANGE OF SETS ON THE PAGE.
+%
+% The appendix is a lookup table and it is now eight pages of eleven sets each.
+% A head reading `Odpowiedzi` on all eight tells the reader nothing they did
+% not know; `Odpowiedzi 26--36` is the thing a lookup table's head is for.
+%
+% \rightmark is the FIRST mark on the page and \leftmark the LAST, which is
+% what makes a range out of one \markboth per set. Both are set to the same
+% number because the two arguments are being used as first-and-last here
+% rather than as chapter-and-section.
+\fancypagestyle{btodp}{%
+  \fancyhf{}%
+  \fancyhead[LE,RO]{\small\thepage}%
+  \fancyhead[RE,LO]{\small\itshape Odpowiedzi\quad\rightmark--\leftmark}%
+  \renewcommand{\headrulewidth}{0.4pt}%
+}
+
 \newcounter{btansi}
 \newcommand{\odpowiedzi}{%
   \chapter*{Odpowiedzi}%
   \addcontentsline{toc}{chapter}{Odpowiedzi}%
-  \markboth{Odpowiedzi}{Odpowiedzi}%
+  \markboth{}{}%
+  \pagestyle{btodp}%
   \small\raggedright
   \setlength{\parindent}{0pt}%
   \setcounter{btansi}{0}%
@@ -358,7 +392,19 @@
       \noindent\begin{minipage}{\linewidth}%
         {\bfseries\color{btink}Zestaw \thebtansi}\par\nobreak\vspace{1pt}%
         \csuse{btans@\thebtansi}\par
-      \end{minipage}\par
+      % THE MARK GOES AFTER THE BLOCK, AND NOT INSIDE IT.
+      %
+      % Inside it is worse than wrong, it is silent: a \markboth in a minipage
+      % never reaches the page at all, so the head came out `Odpowiedzi --`
+      % with both ends empty and no warning anywhere.
+      %
+      % After the block it is also exactly right, which before it would not
+      % have been. A block is unbreakable, so the first mark on a page is the
+      % first block that ENDS there, which is the first block on it, and the
+      % last mark is the last block on it. Placed before the block instead,
+      % a mark whose block is pushed overleaf stays behind and the head claims
+      % a set the page does not carry.
+      \end{minipage}\markboth{\thebtansi}{\thebtansi}\par
     }{}%
   \repeat
 }

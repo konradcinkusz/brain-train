@@ -13,7 +13,7 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 | Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
 | Docs | README, `CONTRIBUTING.md`, this file | — |
 
-The book is **76 pages, 88 sets, 3424 exercises, 91 planned days, zero errors,
+The book is **86 pages, 88 sets, 3424 exercises, 91 planned days, zero errors,
 zero unresolved references, zero overfull boxes**.
 
 **Re-measure those numbers from the build in front of you.** Page counts and
@@ -200,6 +200,49 @@ afterwards.** The first design wrote a manifest at shipout and compared it in
 Python; it needed a build to have run, it needed the titles to survive
 `\write` through inputenc, and it reported the failure two steps away from the
 cause.
+
+## Two scoring rows, and the hole they close
+
+Every set had ONE row under it: Czas, Poprawne, Data. The book has always told
+the reader to come back to a set after a week and compare -- it is the reason
+there is a date box at all -- and then gave them one line to write on. The plan
+made the hole acute: it schedules that repeat on a named day for seventy-two of
+the sets, and the second measurement had nowhere to go except a page it could
+not be compared against.
+
+Two rows is the default now and five is the benchmarks'. It costs ten pages of
+eighty-six, and it is the difference between a book that says to measure twice
+and a book you can measure twice in.
+
+**Three traps came out of that change, and the third is the one worth
+remembering.**
+
+- **`\nobreak` after the last foot line makes the whole book one column.** The
+  glue and its penalty were written after each line rather than before it, so
+  every foot ended with `\nobreak`, every following head opens with one, and
+  the chain ran the length of the book. TeX had no legal breakpoint anywhere:
+  30 pages instead of 86, and eight overfull vboxes the tallest of which was
+  seven metres. Put the glue **before** the line.
+
+- **A `\label` in vertical mode belongs to the previous page.** Moving the
+  split check's label out of the foot's first line and into the vertical list
+  above it made the check compare a page against itself. It passed, and the
+  build shipped a set whose scoring box was on the far side of a page turn --
+  which is the one thing this format exists to prevent. **The render caught it;
+  no gate did.** The label rides on the first foot line, in horizontal mode.
+
+- **A `\markboth` inside a box never reaches the page at all.** The answer
+  appendix's blocks are minipages, so a mark placed in one produced a running
+  head with both ends empty and no warning anywhere. It goes *after* the
+  `\end{minipage}`, which is also the only placement that is exactly right: a
+  block is unbreakable, so the first mark on a page is the first block that
+  ends there and the last is the last. Before the block, a mark whose block is
+  pushed overleaf stays behind and the head claims a set the page does not
+  carry.
+
+The appendix's head now reads `Odpowiedzi 26--37`. It is a lookup table eight
+pages long, and a head that says `Odpowiedzi` on all eight tells the reader
+nothing they did not know.
 
 ## The layout, and why its numbers are what they are
 

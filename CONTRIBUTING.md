@@ -132,7 +132,8 @@ końcu sama — nie ma osobnej listy do zaktualizowania.
 
 Argumenty: tytuł, gwiazdki, cel czasowy, liczba kolumn — plus opcjonalny
 pierwszy argument w nawiasie kwadratowym: liczba wierszy na pomiar, domyślnie
-jeden (`\begin{zestaw}[5]{...}` mają tylko zestawy kontrolne).
+**dwa** (`\begin{zestaw}[5]{...}` mają tylko zestawy kontrolne). Dwa, bo plan
+wyznacza powtórkę prawie każdego zestawu, a oba czasy muszą stać obok siebie.
 
 Potem dopisz go do listy `HAND` w `tools/gen_sets.py` i uruchom `make sets`.
 **Nie dopisuj `\input` wprost do `structure.tex`** — zestaw wstawiony z
