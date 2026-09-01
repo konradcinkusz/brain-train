@@ -254,7 +254,12 @@
 % answer shows the result plus at most a one-line how-it-works, never a
 % step-by-step. \ifblank so an answer with no hint contributes nothing at all
 % rather than an empty line.
-\newcommand{\ans}[2]{%
+% Both arguments are LONG (`+m`). An exercise body may contain an explicit
+% \par -- the deck sets multi-line problems that way and 20 of the 38 do -- and
+% an xparse argument is short unless asked otherwise, so a plain `m` fails with
+% "Paragraph ended before \ans was complete", which names the macro and not the
+% \par that caused it.
+\NewDocumentCommand{\ans}{ +m +m }{%
   \par\nobreak
   \begin{tcolorbox}[bt answer, unbreakable,
                     width=0.86\linewidth, center, halign=flush center]
@@ -303,7 +308,8 @@
 % The header line carries the grading and the category; the problem is set
 % large and centred under it, because the reader is looking at one question at
 % a time with a hand over the rest of the page.
-\NewDocumentCommand{\exercise}{ o m m m }{%
+% The problem is a LONG argument, for the reason given above \ans.
+\NewDocumentCommand{\exercise}{ o m m +m }{%
   \noindent
   {\DifficultyStars{#2}}\hfill
   \IfValueT{#1}{#1\hspace{0.6em}}\TimerBadge{#3}%
