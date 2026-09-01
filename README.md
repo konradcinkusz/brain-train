@@ -1,10 +1,22 @@
-# BrainTrain 2025
+<a name="readme-top"></a>
 
-[![Build book](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml/badge.svg)](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml "Build book")
+# Trening Mózgu
+
+[![Ask me anything](https://flat.badgen.net/static/Ask%20me/anything?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz "Ask me anything")
 [![Licencja](https://flat.badgen.net/github/license/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/blob/main/LICENSE "Licencja")
+[![Utrzymywane](https://flat.badgen.net/static/Maintained/yes?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/commits/main "Utrzymywane")
+[![Gałęzie](https://flat.badgen.net/github/branches/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/branches "Gałęzie")
+[![Commity](https://flat.badgen.net/github/commits/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/commits/main "Commity")
 [![Zgłoszenia](https://flat.badgen.net/github/issues/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/issues "Zgłoszenia")
+[![Pull requesty](https://flat.badgen.net/github/prs/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/pulls "Pull requesty")
+[![Build book](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml/badge.svg)](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml "Build book")
 
-Zbiór krótkich zadań wzmacniających obie półkule mózgu — arytmetyka na czas, kolejność działań, zagadki logiczne, ciągi liczbowe i wyzwania mieszane. Format inspirowany książkami z serii *Trening Mózgu*: jedno zadanie, stoper, porównaj z podanym limitem czasu. Bez kalkulatora!
+Zbiór krótkich zadań na czas — arytmetyka, kolejność działań, zagadki logiczne,
+ciągi liczbowe i wyzwania mieszane. Format inspirowany serią *Trening Mózgu*
+i programowanym układem Strouda: jedno zadanie na **ramkę**, stoper, porównanie
+z limitem. Bez kalkulatora.
+
+**38 zadań · 5 obszarów · 20 stron A4.**
 
 ## Quick start
 
@@ -13,6 +25,42 @@ git clone https://github.com/konradcinkusz/brain-train.git
 cd brain-train
 make book
 ```
+
+Potrzebujesz `pdflatex`, `latexmk` i `python3`. Gotowy PDF powstaje jako
+`book/main-pl-a4.pdf`.
+
+## Jak działa format
+
+Każde zadanie zajmuje jedną **ramkę** — kawałek strony między dwiema cienkimi
+kreskami, z numerem na zewnętrznym marginesie. Odpowiedź nie stoi pod zadaniem:
+otwiera ramkę **następną**.
+
+```
+──────────────────────────────────────────────────────  ①
+★☆☆                              [Dodawanie]  [⏱ 30 s]
+                    47 + 38 = ?
+──────────────────────────────────────────────────────  ②
+           ┌────────────────────────────┐
+           │             85             │
+           └────────────────────────────┘
+★☆☆                             [Odejmowanie]  [⏱ 30 s]
+                   156 − 79 = ?
+```
+
+Zakrywasz dłonią stronę poniżej kreski, uruchamiasz stoper, liczysz w pamięci,
+a dopiero potem czytasz dalej. To jedyna reguła tego formatu — i powód, dla
+którego książka nie jest prezentacją przelaną na papier: slajd może schować
+odpowiedź, bo czytelnik jej nie widzi, dopóki nie przewinie. Strona nie może.
+
+<p align="right">(<a href="#readme-top">wróć na górę</a>)</p>
+
+## Poziomy trudności
+
+| Gwiazdki | Poziom | Czas docelowy |
+|----------|--------|---------------|
+| ★ | Łatwy | do 1 min |
+| ★★ | Średni | 1–3 min |
+| ★★★ | Trudny | 3–5 min |
 
 ## Struktura repozytorium
 
@@ -34,66 +82,85 @@ make book
 │   ├── convert_deck.py               # areas/ → book/chapters/
 │   ├── checklog.py                   # Bramka logu (nie kod wyjścia!)
 │   └── checkbadges.py                # Numery ramek na właściwym marginesie
-├── main.tex                           # Prezentacja Beamer (patrz #16, #21)
-├── mybraintrainer.cls / .sty          # Klasa i makra prezentacji
 ├── .github/workflows/
 │   ├── build.yml                     # Build książki na każdy push i PR
 │   └── ci.yml                        # Build + wydanie PDF na tag v*/V*
 ├── Makefile
+├── CLAUDE.md                          # Decyzje układu i pułapki — czytaj przed zmianami
 ├── LICENSE
 └── README.md
 ```
 
-## Książka (w budowie)
+## Budowanie
 
-Zbiór jest przenoszony do formatu **książki A4** w układzie Stroudowskim: jedno
-zadanie na ramkę, numer ramki na zewnętrznym marginesie, odpowiedź otwiera
-ramkę następną — zakrywasz stronę dłonią, liczysz na czas, czytasz dalej.
+| Cel | Co robi |
+|---|---|
+| `make book` | Buduje książkę i uruchamia wszystkie bramki |
+| `make convert` | `areas/` → `book/chapters/` |
+| `make drift` | Sprawdza, czy rozdziały zgadzają się z `areas/` |
+| `make check` | Same bramki, bez budowania |
+| `make clean` | Usuwa artefakty |
 
-```bash
-make book     # zbuduj książkę i sprawdź log
-make convert  # przenieś areas/ do book/chapters/
-make help     # pozostałe cele
-```
+Trzy bramki, każda sprawdza coś, czego pozostałe nie widzą:
 
-Wszystkie **38 zadań** z pięciu obszarów są już w książce (`book/`, 18 stron).
-Rozdziały w `book/chapters/` są **generowane** z `areas/` przez
-`tools/convert_deck.py` — edytuj `areas/` i uruchom `make convert`; `make book`
-sprawdza, czy nie rozjechały się z sobą. Całość opisuje
-[#14](https://github.com/konradcinkusz/brain-train/issues/14).
+- **`tools/checklog.py`** — błędy, nierozwiązane referencje, przepełnione pudełka
+  i brak zbieżności. To jest bramka, **nie kod wyjścia `latexmk`**: przy
+  `nonstopmode` nieudany przebieg i tak zapisuje PDF, a przy `-file-line-error`
+  linia błędu zaczyna się od ścieżki, więc `grep '^!'` też jej nie widzi.
+- **`tools/checkbadges.py`** — czyta gotowy PDF i sprawdza, że numer każdej ramki
+  jest na *zewnętrznym* marginesie. Ten defekt nie daje błędu, ostrzeżenia ani
+  przepełnionego pudełka — żaden log go nie zobaczy.
+- **`tools/convert_deck.py --check`** — rozdziały są generowane z `areas/`;
+  zadanie zmienione w źródle i nieprzekonwertowane zostawia w książce starą wersję,
+  a obie wersje plików są poprawne, więc reszta bramek świeci na zielono.
 
-> `make book` nie ufa kodowi wyjścia `latexmk`: przy `nonstopmode` nieudany
-> przebieg i tak zapisuje PDF, a przy `-file-line-error` linia błędu zaczyna się
-> od ścieżki, więc `grep '^!'` też jej nie widzi. Bramką jest
-> `tools/checklog.py`.
+Obie bramki czytające PDF sprawdzono, wprowadzając defekt, którego pilnują —
+sprawdzenie, które nigdy nie zawiodło, może nie mierzyć niczego.
 
-## Poziomy trudności
-
-| Gwiazdki | Poziom | Czas docelowy |
-|----------|--------|---------------|
-| ★ | Łatwy | do 1 min |
-| ★★ | Średni | 1–3 min |
-| ★★★ | Trudny | 3–5 min |
+<p align="right">(<a href="#readme-top">wróć na górę</a>)</p>
 
 ## Wydanie PDF
 
-Wypchnij tag `v*` lub `V*`, aby zbudować książkę i dołączyć PDF
-(`trening-mozgu-a4.pdf`) do wydania:
+Wypchnij tag `v*` lub `V*`, aby zbudować książkę i dołączyć
+`trening-mozgu-a4.pdf` do wydania:
 
 ```bash
 git tag v2.0.0
 git push origin v2.0.0
 ```
 
-Wydanie powstaje tylko wtedy, gdy build przejdzie wszystkie bramki — inaczej
-job wydania w ogóle się nie uruchamia. To celowe: wydanie `v1.0.0` nie ma
-załączonego PDF-a, bo jego build się nie powiódł, a nikt tego nie zauważył
-([#21](https://github.com/konradcinkusz/brain-train/issues/21)).
+Wydanie powstaje tylko wtedy, gdy build przejdzie wszystkie bramki — job wydania
+deklaruje `needs: build`, więc inaczej w ogóle się nie uruchamia. To celowe:
+wydanie `v1.0.0` nie ma załączonego PDF-a, bo jego build się nie powiódł, a nikt
+tego nie zauważył ([#21](https://github.com/konradcinkusz/brain-train/issues/21)).
 
 ## Wkład
 
-Fork, otwórz issue lub pull request — nowe zadania mile widziane!
+Nowe zadania mile widziane. Zacznij od
+[CONTRIBUTING.md](CONTRIBUTING.md) — opisuje format ramki, konwencje i to, co
+trzeba zaktualizować, dodając zadanie.
 
 ## Licencja
 
 MIT No Attribution — szczegóły w [LICENSE](LICENSE).
+
+Maszyneria układu (`book/preamble.tex`, `tools/`) jest portem z
+[`konradcinkusz/math-for-ai-engineers`](https://github.com/konradcinkusz/math-for-ai-engineers),
+którego **kod jest na MIT**.
+
+## Obserwuj
+
+[![GitHub followers](https://img.shields.io/github/followers/konradcinkusz?style=social)](https://github.com/konradcinkusz "GitHub followers")
+[![GitHub stars](https://img.shields.io/github/stars/konradcinkusz/brain-train?style=social)](https://github.com/konradcinkusz/brain-train/stargazers "GitHub stars")
+
+## Historia gwiazdek
+
+<a href="https://star-history.com/#konradcinkusz/brain-train&Timeline">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=konradcinkusz/brain-train&type=Timeline&theme=dark" />
+  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=konradcinkusz/brain-train&type=Timeline" />
+  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=konradcinkusz/brain-train&type=Timeline" />
+</picture>
+</a>
+
+<p align="right">(<a href="#readme-top">wróć na górę</a>)</p>

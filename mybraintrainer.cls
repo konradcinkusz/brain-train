@@ -13,7 +13,7 @@
   \hbox{%
     \begin{beamercolorbox}[wd=\paperwidth,ht=2.5ex,dp=1ex,leftskip=1em,rightskip=1em]{author in head/foot}
       \scriptsize
-      \href{https://github.com/konradcinkusz/BrainTrain}{\faGithub\;BrainTrain 2025}
+      \href{https://github.com/konradcinkusz/brain-train}{\faGithub\;brain-train}
     \end{beamercolorbox}%
   }
 }
