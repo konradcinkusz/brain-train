@@ -1,0 +1,65 @@
+% ======================================================
+%  "Jak korzystać z tej książki" -- the one page that makes the format work.
+%
+%  It has to fit on ONE page: a reader who has to turn over to finish learning
+%  how to use the book has already been shown the thing the method depends on
+%  not seeing.
+%
+%  NOTE THE WORDING. Every instruction here is true under any pagination. The
+%  book must never say "zanim odwrócisz stronę" -- where a page breaks is a
+%  property of the format, not of the text, so an instruction that names a page
+%  turn is true in one build and false in another. "Zanim przeczytasz dalej"
+%  and "zakryj stronę poniżej kreski" both name the reader's hand, which is
+%  what the method actually asks for, and are true everywhere.
+% ======================================================
+
+\chapter*{Jak korzystać z tej książki}
+\addcontentsline{toc}{chapter}{Jak korzystać z tej książki}
+
+Każde zadanie zajmuje jedną \emph{ramkę} — kawałek strony między dwiema
+cienkimi kreskami, z numerem na zewnętrznym marginesie. Odpowiedź nie stoi pod
+zadaniem: otwiera ramkę \emph{następną}. Dzięki temu możesz zakryć dłonią
+stronę poniżej kreski i pracować, nie widząc rozwiązania.
+
+\begin{enumerate}
+  \item Zakryj dłonią stronę poniżej zadania.
+  \item Uruchom stoper.
+  \item Rozwiąż zadanie \emph{w pamięci}. Bez kalkulatora, bez kartki.
+  \item Zatrzymaj stoper i porównaj swój czas z limitem podanym przy zadaniu.
+  \item Dopiero teraz czytaj dalej — odpowiedź czeka w kolejnej ramce.
+\end{enumerate}
+
+\noindent
+Nie chodzi o to, żeby zawsze zmieścić się w limicie. Chodzi o to, żeby
+\emph{spróbować odpowiedzieć, zanim zobaczysz rozwiązanie} — także wtedy, gdy
+nie jesteś pewien. Pomyłka, którą sam poprawisz, zostaje w pamięci lepiej niż
+poprawna odpowiedź, którą tylko przeczytałeś.
+
+\section*{Gwiazdki i czas}
+
+Gwiazdki przy zadaniu mówią, ile powinno zająć:
+
+\begin{center}
+  \begin{tabular}{@{}c@{\hspace{1.5em}}l@{\hspace{1.5em}}l@{}}
+    \DifficultyStars{1} & łatwe   & do 1 minuty \\[3pt]
+    \DifficultyStars{2} & średnie & 1--3 minuty \\[3pt]
+    \DifficultyStars{3} & trudne  & 3--5 minut \\
+  \end{tabular}
+\end{center}
+
+\noindent
+Obok gwiazdek stoi kategoria zadania i limit czasu:
+
+% On its own centred line rather than run into the sentence. Inline, the two
+% badges are unbreakable boxes that TeX will happily split across a line break,
+% so the category ends one line and the clock starts the next -- which reads as
+% two unrelated things instead of one example of a frame's header.
+\begin{center}
+  \CategoryBadge[ArithColor!20]{Dodawanie}\hspace{0.6em}\TimerBadge{30 s}
+\end{center}
+
+\section*{Pięć obszarów}
+
+Rozdziały są niezależne — możesz zaczynać od dowolnego i wracać do nich w
+dowolnej kolejności. Na otwarciu każdego rozdziału jest napisane, ile ma
+ramek, więc wiesz, na co się piszesz, zanim zaczniesz.
