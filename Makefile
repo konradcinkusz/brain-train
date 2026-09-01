@@ -24,7 +24,7 @@ BOOKLOG   := $(BOOKDIR)/$(BOOKMAIN).log
 BOOKPDF   := $(BOOKDIR)/$(BOOKMAIN).pdf
 LATEXMK   := latexmk -pdf -interaction=nonstopmode -file-line-error
 
-.PHONY: all book book-only check drift sets clean help
+.PHONY: all book book-only check drift answers sets clean help
 
 all: book
 
@@ -36,7 +36,7 @@ book-only:
 	cd $(BOOKDIR) && $(LATEXMK) $(BOOKMAIN).tex || true
 
 ## check: read the log properly -- NOT `grep '^!'`, NOT the exit code
-check: drift
+check: drift answers
 	python3 tools/checklog.py $(BOOKLOG)
 
 ## drift: generated sets must match tools/gen_sets.py
@@ -45,11 +45,21 @@ check: drift
 # in areas/ and never re-converted leaves the book quietly showing the old one,
 # and every other check stays green because both files are individually valid.
 #
-# It also guards the include list: a set added to gen_sets.py and forgotten in
-# sets/generated/_all.tex would be a set nobody ever sees, with every other
-# check green, so the list is generated alongside the sets and compared here.
+# It also guards the include lists: a set added to gen_sets.py and forgotten in
+# sets/generated/_blok-N.tex would be a set nobody ever sees, with every other
+# check green, so those lists are generated alongside the sets and compared
+# here -- one per block, because a block is a chapter.
 drift:
 	python3 tools/gen_sets.py --check
+
+## answers: re-compute every printed answer from the printed question
+#
+# The generator works each answer out from the values it printed, so the two
+# cannot disagree -- but a builder that is consistently wrong prints a matching
+# pair. This parses the .tex the build consumes and evaluates it by a second
+# route, and it refuses to pass over a question shape it does not recognise.
+answers:
+	python3 tools/checkanswers.py
 
 ## sets: regenerate the drill sets
 sets:

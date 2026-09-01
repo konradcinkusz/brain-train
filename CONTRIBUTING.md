@@ -42,11 +42,22 @@ def dodawanie(r, lo, hi):
 Potem dopisz zestaw do listy `SETS`:
 
 ```python
-("26-nowy", "Tytuł zestawu", 2, "4:00", 3, 1026,
- lambda r: distinct(N, lambda: dodawanie(r, 101, 999))),
+Set("82-nowy", "Tytuł zestawu", 2, 2, 8, 3, 1157, "dodawanie",
+    lambda r: distinct(N, lambda: dodawanie(r, 101, 999))),
 ```
 
-Kolumny: `(nazwa pliku, tytuł, gwiazdki, cel czasowy, liczba kolumn, seed, builder)`.
+Pola: `nazwa pliku`, `tytuł`, `blok` (1–3, czyli rozdział), `gwiazdki`,
+**`sekundy na zadanie`**, `liczba kolumn`, `seed`, `rodzina`, `builder`,
+i opcjonalnie `wide=True`, gdy zadanie nie mieści się w `\z` i potrzebuje `\zz`.
+
+**Celu czasowego się nie wpisuje — wpisuje się sekundy na jedno zadanie.**
+Cel to `sekundy × N`, więc zmiana `N` przesuwa wszystkie cele naraz, zamiast
+zostawiać osiemdziesiąt liczb, z których każda przestała być prawdziwa.
+
+**Rodzina nie jest ozdobą.** `tools/gen_plan.py` układa z niej plan tak, żeby
+dwa zestawy tej samej rodziny nie wypadły dzień po dniu — trening z
+przeplotem trzyma się dłużej niż blokowy. Zestaw bez sensownej rodziny
+zepsuje plan, nie generator.
 
 `distinct(N, ...)` losuje aż uzbiera `N` **różnych** zadań — przy czterdziestu
 losowaniach powtórki są prawie pewne, a powtórka w zestawie wygląda jak błąd
@@ -72,6 +83,19 @@ return rf"${fmt(b * q)} \div {fmt(b)}$", fmt(q)
 **Bez `\sqrt` i `\frac`.** Oba są wyższe niż `\strut`, który ustala rytm
 wierszy, więc zestaw z nich zbudowany oddycha inaczej niż wszystkie pozostałe.
 Jeśli działanie trzeba nazwać — nazwij je słowem (`pierwiastek z $169$`).
+
+**I naucz checkera nowego kształtu pytania.** `tools/checkanswers.py`
+przelicza każdą wydrukowaną odpowiedź z wydrukowanego pytania, drugą ścieżką
+niż generator — i **kształt, którego nie rozpoznaje, jest błędem, nie
+pominięciem**. Checker, który po cichu przepuszcza to, czego nie zna,
+przestaje mierzyć w dniu, w którym ktoś doda buildera, i dalej świeci na
+zielono. Dopisz regułę:
+
+```python
+@rule(r"^suma cyfr \$([\d\\,]+)\$$")
+def _suma_cyfr(m):
+    return Fraction(sum(int(c) for c in m[1].replace("\\,", "")))
+```
 
 Potem `make sets && make book`.
 
@@ -144,13 +168,15 @@ make book      # build + bramki
   na `\z` i powinno być `\zz`.
 - **`STALE`** — zapomniałeś `make sets` (albo zostawiłeś w
   `book/sets/generated/` plik, którego generator już nie tworzy).
+- **`nierozpoznanych`** — dodałeś buildera i nie nauczyłeś jego kształtu
+  `tools/checkanswers.py`. Zobacz wyżej.
 - **`Zestaw N is split`** — zestaw nie mieści się na stronie.
 
 **Nie ufaj kodowi wyjścia `latexmk`.** Przy `nonstopmode` nieudany przebieg i
 tak zapisuje PDF. Bramką jest `tools/checklog.py`.
 
-Zaktualizuj liczbę zadań w `README.md`, jeśli się zmieniła — `make book`
-wypisuje ją na końcu.
+Zaktualizuj liczby w `README.md`, jeśli się zmieniły — `make sets` wypisuje
+liczbę zestawów i zadań w każdym bloku, a `make book` liczbę stron.
 
 ## Kontekst
 

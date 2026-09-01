@@ -2,7 +2,7 @@
 """Generate the book's drill sets.
 
 WHY GENERATED. This book is scored on how many exercises you get through and
-how fast, so it needs hundreds of them, and hundreds of hand-written sums is
+how fast, so it needs thousands of them, and thousands of hand-written sums is
 both a waste of a person and a place for arithmetic slips to hide. Everything
 here is produced and its answer computed by the same three lines, so a printed
 answer cannot disagree with its printed question.
@@ -24,7 +24,11 @@ from __future__ import annotations
 import argparse
 import random
 import sys
+from collections import Counter
+from fractions import Fraction
+from math import gcd
 from pathlib import Path
+from typing import Callable, NamedTuple
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "book" / "sets" / "generated"
@@ -53,6 +57,13 @@ def fmt(n: int) -> str:
     return s
 
 
+def sgn(n: int) -> str:
+    """A negative ANSWER, set in maths so the sign is a minus and not a hyphen.
+    The appendix is text mode, where `-12` prints an en-rule the reader has to
+    decide about; `$-12$` cannot be misread."""
+    return f"${n}$" if n < 0 else fmt(n)
+
+
 def dec(tenths: int) -> str:
     """Tenths as a decimal for MATH mode. `{,}` because a bare comma in math is
     punctuation and TeX puts a space after it -- `1,5` would set as `1, 5`."""
@@ -63,6 +74,15 @@ def dect(tenths: int) -> str:
     """The same number for TEXT mode, where a comma is just a comma. The answer
     appendix is text, so the two forms are not interchangeable."""
     return f"{tenths // 10},{tenths % 10}"
+
+
+def target(secs: float) -> str:
+    """The head's target time, DERIVED rather than chosen: seconds per exercise
+    times N. A target typed in by hand is a number that stops being true the
+    day N moves, and every set would have to be re-guessed one at a time. This
+    reproduces all twenty-five of the original targets exactly."""
+    total = round(secs * N)
+    return f"{total // 60}:{total % 60:02d}"
 
 
 def split(n: int, k: int) -> list[int]:
@@ -108,6 +128,11 @@ def distinct(n, draw, seen=None):
 #  \strut that sets the row pitch in \z, so a set built from them breathes at a
 #  different rate than every other set, and a reader running down a column with
 #  a pencil feels it. Where the operation needs saying, it is said in words.
+#
+#  NOTE ON DIACRITICS. New exercise text is written in UTF-8, which is what the
+#  titles have always used and what inputenc reads. The TeX escapes in
+#  podwajanie() are transcribed from the archived deck and are left as found:
+#  normalising them would be a silent edit to text nobody asked to change.
 # ------------------------------------------------------------------
 
 def dodawanie(r, lo, hi):
@@ -138,10 +163,25 @@ def trzy_skladniki(r):
     return f"${a} + {b} + {c}$", fmt(a + b + c)
 
 
+def cztery_skladniki(r):
+    """Four small addends. The skill is holding a running total while the next
+    number arrives, which two addends never ask for."""
+    a, b, c, d = (r.randint(6, 39) for _ in range(4))
+    return f"${a} + {b} + {c} + {d}$", fmt(a + b + c + d)
+
+
 def dopelnienia(r):
     """Take away from a round number. The shortcut is to complement every digit
     against 9 and the last one against 10, which is why the minuend is round."""
     base = r.choice([100, 100, 200, 500, 1000, 1000])
+    a = r.randint(base // 10, base - base // 10)
+    return f"${fmt(base)} - {fmt(a)}$", fmt(base - a)
+
+
+def dopelnienia_duze(r):
+    """The same shortcut one order of magnitude out, where doing it by columns
+    stops being an option and the complement is the only quick route."""
+    base = r.choice([1000, 2000, 5000, 10000])
     a = r.randint(base // 10, base - base // 10)
     return f"${fmt(base)} - {fmt(a)}$", fmt(base - a)
 
@@ -161,6 +201,15 @@ def triki(r):
     then x100). x25 gets a multiple of four so the quarter stays whole."""
     k = r.choice([11, 11, 5, 5, 9, 25])
     a = 4 * r.randint(3, 40) if k == 25 else r.randint(12, 89)
+    return rf"${fmt(a)} \times {k}$", fmt(a * k)
+
+
+def triki_duze(r):
+    """The same idea against the neighbours of a round number: x99 is x100 less
+    one, x101 is x100 plus one, x15 is x10 plus half of it, x50 is half of
+    x100. Each is one round multiplication and one correction."""
+    k = r.choice([99, 101, 15, 50, 12, 20])
+    a = 2 * r.randint(6, 45) if k == 15 else r.randint(12, 89)
     return rf"${fmt(a)} \times {k}$", fmt(a * k)
 
 
@@ -184,6 +233,17 @@ def dziesietne(r):
     return f"${dec(a)} - {dec(b)}$", dect(a - b)
 
 
+def dziesietne_mnozenie(r):
+    """A decimal times a whole number. The digits are the easy part; what the
+    drill is for is deciding where the point lands, which is why the multiplier
+    is never a power of ten."""
+    t = r.randint(11, 98)
+    while t % 10 == 0:
+        t = r.randint(11, 98)
+    k = r.randint(3, 9)
+    return rf"${dec(t)} \times {k}$", dect(t * k)
+
+
 def czesci(r):
     """A fraction of a number. The base is a multiple of the denominator, so
     the answer is always whole -- this drills the division, not the remainder."""
@@ -199,6 +259,16 @@ def reszty(r):
     return rf"reszta z ${fmt(a)} \div {b}$", fmt(a % b)
 
 
+def dzielenie_reszta(r):
+    """Quotient AND remainder, which is what integer division actually returns
+    and what reszty() deliberately throws half of away."""
+    b = r.choice([3, 4, 5, 6, 7, 8, 9, 11, 12])
+    a = r.randint(23, 199)
+    while a % b == 0:
+        a = r.randint(23, 199)
+    return rf"${fmt(a)} \div {b}$ (całość i reszta)", f"{a // b} r. {a % b}"
+
+
 def kolejnosc(r):
     """Order of operations: the answer differs if you go left to right."""
     shape = r.randint(0, 3)
@@ -206,12 +276,34 @@ def kolejnosc(r):
     if shape == 0:
         return rf"${c} + {a} \times {b}$", fmt(c + a * b)
     if shape == 1:
+        # sgn(), not fmt(): this shape can land below zero, and a bare `-8`
+        # in the text-mode appendix prints a hyphen where the reader needs a
+        # minus. The first edition shipped exactly one of those.
         return (rf"${c * a + b} - {a} \times {b // 2 + 1}$",
-                fmt(c * a + b - a * (b // 2 + 1)))
+                sgn(c * a + b - a * (b // 2 + 1)))
     if shape == 2:
         return rf"$({a} + {b}) \times {c % 8 + 2}$", fmt((a + b) * (c % 8 + 2))
     q = r.randint(2, 9)
     return rf"${a * q} \div {q} + {b}$", fmt(a + b)
+
+
+def kolejnosc_nawiasy(r):
+    """Brackets and a square in the same line, so precedence has three levels
+    rather than two and the bracket is no longer always first."""
+    a, b, c = r.randint(2, 15), r.randint(2, 12), r.randint(2, 9)
+    shape = r.randint(0, 3)
+    if shape == 0:
+        return rf"$({a} + {b}) \times {c} - {b}$", fmt((a + b) * c - b)
+    if shape == 1:
+        return rf"${c}^2 + {a} \times {b}$", fmt(c * c + a * b)
+    if shape == 2:
+        # Built from the quotient outwards, so the division inside the bracket
+        # comes out exact -- the exercise is the ORDER, not a remainder.
+        d, q = r.randint(2, 9), r.randint(2, 12)
+        return (rf"$({fmt(d * q + b)} - {b}) \div {d} + {c}^2$", fmt(q + c * c))
+    # sgn() for the same reason as kolejnosc(): a small a against a large c
+    # puts this one below zero.
+    return rf"${a} \times ({b} + {c}) - {c}^2$", sgn(a * (b + c) - c * c)
 
 
 def procenty(r):
@@ -230,17 +322,282 @@ def procenty_trudne(r):
     return rf"${p}\%$ z ${fmt(base)}$", fmt(base * p // 100)
 
 
-# The two enumerable sets are SAMPLED, not drawn: their whole space is barely
-# bigger than a set, so rejection would spend most of its draws on collisions.
-# Sampling also means the reader meets each square exactly once.
-def kwadraty(r, n):
-    return [(f"${a}^2$", fmt(a * a)) for a in r.sample(range(11, 11 + n), n)]
+def procent_ile(r):
+    """The percentage read backwards: the part and the whole are given and the
+    rate is what is missing. Same three numbers, and most people who can do
+    procenty() cannot do this one at speed."""
+    p = r.choice([5, 10, 20, 25, 40, 50, 60, 75])
+    base = r.choice([20, 40, 60, 80, 120, 160, 200, 240, 300, 400])
+    return rf"${fmt(base * p // 100)}$ to ile \% z ${fmt(base)}$", f"{p}\\%"
 
 
-def pierwiastki(r, n):
+def procent_bazy(r):
+    """And the third way round: the rate and the part are given, the whole is
+    missing. This is the one an invoice asks for."""
+    p = r.choice([10, 20, 25, 40, 50, 75])
+    base = r.choice([20, 40, 60, 80, 120, 160, 200, 240, 300, 400])
+    return (rf"${p}\%$ liczby to ${fmt(base * p // 100)}$", fmt(base))
+
+
+def podwyzki(r):
+    """A percentage applied TO a number rather than taken FROM it, which is the
+    shape a price change actually has."""
+    p = r.choice([5, 10, 20, 25, 50])
+    base = r.choice([20, 40, 60, 80, 120, 160, 200, 240, 300, 400])
+    d = base * p // 100
+    if r.random() < 0.5:
+        return rf"${fmt(base)}$ w górę o ${p}\%$", fmt(base + d)
+    return rf"${fmt(base)}$ w dół o ${p}\%$", fmt(base - d)
+
+
+def kwadraty_konc5(r, n):
+    """Squares of numbers ending in five, which have a shortcut worth owning:
+    multiply the leading part by one more than itself and write 25 after it.
+    Sampled over exactly n of them, so the reader meets each one once."""
+    return [(f"${fmt(v)}^2$", fmt(v * v))
+            for v in r.sample([10 * k + 5 for k in range(1, n + 1)], n)]
+
+
+def roznica_kwadratow(r):
+    """A pair straddling a round number, so (m-d)(m+d) is m^2 - d^2 and the
+    whole thing is one square and one subtraction. The reader who multiplies it
+    out the long way gets the same answer and a worse time, which is the
+    point."""
+    m = r.choice([20, 30, 40, 50, 60, 70, 80, 90, 100])
+    d = r.randint(1, 9)
+    return rf"${m - d} \times {m + d}$", fmt((m - d) * (m + d))
+
+
+# Powers worth having by heart, and nothing beyond them: the doubling ladder as
+# far as 4096, the small cubes, and the squares a reader meets in real work.
+# Enumerated rather than drawn, because the useful ones do not form a range.
+POWERS = ([(2, e) for e in range(2, 13)]
+          + [(3, e) for e in range(2, 8)]
+          + [(4, e) for e in range(2, 7)]
+          + [(5, e) for e in range(2, 6)]
+          + [(6, e) for e in (2, 3, 4)]
+          + [(7, e) for e in (2, 3)]
+          + [(8, e) for e in (2, 3)]
+          + [(9, e) for e in (2, 3)]
+          + [(10, e) for e in range(2, 6)]
+          + [(11, e) for e in (2, 3)]
+          + [(12, e) for e in (2, 3)]
+          + [(b, 2) for b in (13, 14, 15, 16, 20, 25, 30)])
+
+
+def potegi(r, n):
+    return [(f"${b}^{{{e}}}$", fmt(b ** e)) for b, e in r.sample(POWERS, n)]
+
+
+def kwadraty(r, n, lo=11):
+    """Sampled, not drawn: the whole space is barely bigger than a set, so
+    rejection would spend most of its draws on collisions -- and sampling means
+    the reader meets each square exactly once."""
+    return [(f"${a}^2$", fmt(a * a)) for a in r.sample(range(lo, lo + n), n)]
+
+
+def pierwiastki(r, n, lo=4):
     """In words, not \\sqrt -- see the note above the builders."""
     return [(f"pierwiastek z ${fmt(a * a)}$", fmt(a))
-            for a in r.sample(range(4, 4 + n), n)]
+            for a in r.sample(range(lo, lo + n), n)]
+
+
+# Conversions written as an arrow rather than a sentence. The arrow fits three
+# columns where "zamień 4 kilometry na metry" does not, and it says the same
+# thing in every language, so nothing here has to be translated to be read.
+UNITS = [("km", "m", 1000), ("m", "cm", 100), ("cm", "mm", 10),
+         ("kg", "g", 1000), ("t", "kg", 1000), ("l", "ml", 1000),
+         ("h", "min", 60), ("min", "s", 60)]
+
+
+def jednostki(r):
+    big, small, k = r.choice(UNITS)
+    a = r.randint(2, 48)
+    if r.random() < 0.5:
+        return rf"${a}$ {big} $\rightarrow$ {small}", fmt(a * k)
+    return rf"${fmt(a * k)}$ {small} $\rightarrow$ {big}", fmt(a)
+
+
+def czas(r):
+    """Minutes between two clock times. Asked in minutes rather than in hours
+    and minutes so the answer is one number: `1 h 35 min` and `95 min` are the
+    same answer written two ways, and a scored drill cannot accept both."""
+    h1, m1 = r.randint(6, 19), r.choice([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55])
+    dur = r.choice([r.randint(4, 12) * 5, r.randint(13, 36) * 5])
+    end = h1 * 60 + m1 + dur
+    return (f"od {h1}:{m1:02d} do {end // 60}:{end % 60:02d}", fmt(dur))
+
+
+def srednia(r):
+    """The mean of three or four numbers, built from the mean outwards so it
+    comes out whole. A drill whose answers are recurring decimals measures
+    handwriting."""
+    k = r.choice([3, 3, 4])
+    m = r.randint(8, 60)
+    while True:
+        d = [r.randint(-9, 9) for _ in range(k - 1)]
+        d.append(-sum(d))
+        xs = [m + x for x in d]
+        if all(x > 0 for x in xs):
+            break
+    return "średnia z $" + "$, $".join(str(x) for x in xs) + "$", fmt(m)
+
+
+def rownania(r):
+    """One unknown, one step. Undoing an operation is a different motion from
+    doing it, and a reader fluent in both directions of arithmetic is often
+    fluent in only one of these."""
+    x = r.randint(3, 60)
+    shape = r.randint(0, 3)
+    if shape == 0:
+        a = r.randint(5, 80)
+        return f"$x + {a} = {fmt(x + a)}$", fmt(x)
+    if shape == 1:
+        a = r.randint(5, 60)
+        return f"$x - {a} = {x}$", fmt(x + a)
+    if shape == 2:
+        a = r.randint(2, 12)
+        return f"${a}x = {fmt(a * x)}$", fmt(x)
+    a = r.randint(2, 12)
+    return rf"$x \div {a} = {x}$", fmt(a * x)
+
+
+def ujemne(r):
+    """Below zero, where a subtraction can be an addition and two minuses stop
+    meaning what they mean above it."""
+    a, b = r.randint(3, 40), r.randint(3, 40)
+    shape = r.randint(0, 3)
+    if shape == 0:
+        return f"$-{a} + {b}$", sgn(b - a)
+    if shape == 1:
+        return f"${a} - {b}$", sgn(a - b)
+    if shape == 2:
+        c = r.randint(2, 9)
+        return rf"$-{a} \times {c}$", sgn(-a * c)
+    c = r.randint(2, 9)
+    return rf"$-{fmt(a * c)} \div {c}$", sgn(-a)
+
+
+DENS = (2, 3, 4, 5, 6, 8, 10, 12)
+
+
+def frac_txt(f: Fraction) -> str:
+    return fmt(f.numerator) if f.denominator == 1 else f"{f.numerator}/{f.denominator}"
+
+
+def ulamki(r):
+    """Fractions written with a slash, never \\frac -- see the note above the
+    builders. One denominator always divides the other, so the common
+    denominator is one of the two and finding it is not the exercise."""
+    d1 = r.choice(DENS)
+    d2 = r.choice([d for d in DENS if d % d1 == 0 or d1 % d == 0])
+    n1, n2 = r.randint(1, d1 - 1), r.randint(1, d2 - 1)
+    f1, f2 = Fraction(n1, d1), Fraction(n2, d2)
+    if r.random() < 0.5:
+        return f"${n1}/{d1} + {n2}/{d2}$", frac_txt(f1 + f2)
+    if f2 > f1:
+        f1, f2, n1, d1, n2, d2 = f2, f1, n2, d2, n1, d1
+    if f1 == f2:
+        return f"${n1}/{d1} + {n2}/{d2}$", frac_txt(f1 + f2)
+    return f"${n1}/{d1} - {n2}/{d2}$", frac_txt(f1 - f2)
+
+
+def nwd_nww(r):
+    """Both kept small enough to be seen rather than computed: the drill is
+    recognising the common factor, not running Euclid."""
+    if r.random() < 0.5:
+        a, b = r.randint(6, 60), r.randint(6, 60)
+        return f"NWD$({a}, {b})$", fmt(gcd(a, b))
+    a, b = r.randint(2, 15), r.randint(2, 15)
+    return f"NWW$({a}, {b})$", fmt(a * b // gcd(a, b))
+
+
+def podzielnosc(r):
+    """Half the draws are built divisible on purpose. Left to chance a divisor
+    of nine would answer `nie` eight times out of nine, and a reader who
+    noticed that would score well without ever applying the rule."""
+    d = r.choice([3, 4, 6, 8, 9, 11])
+    if r.random() < 0.5:
+        n = d * r.randint(12, 999)
+    else:
+        n = r.randint(100, 9999)
+    return (f"czy ${fmt(n)}$ dzieli się przez ${d}$?",
+            "tak" if n % d == 0 else "nie")
+
+
+PLACES = {10: "dziesiątek", 100: "setek", 1000: "tysięcy"}
+
+
+def zaokraglanie(r):
+    """Never an exact half. Which way 3850 goes to hundreds is a convention,
+    and a drill that scores a convention is scoring whether the reader was
+    taught the same one."""
+    place = r.choice([10, 100, 1000])
+    n = r.randint(place, 100 * place)
+    while n % place == place // 2:
+        n = r.randint(place, 100 * place)
+    return (f"${fmt(n)}$ do {PLACES[place]}",
+            fmt(int(round(n / place)) * place))
+
+
+def suma_cyfr(r):
+    n = r.randint(1000, 99999)
+    return f"suma cyfr ${fmt(n)}$", fmt(sum(int(c) for c in str(n)))
+
+
+def ciag(r):
+    """Five shapes, and the reader is not told which. Naming the rule is what
+    makes the next term findable, so a set of one shape would only measure
+    arithmetic."""
+    kind = r.randint(0, 4)
+    if kind == 0:
+        a, d = r.randint(2, 30), r.randint(2, 12)
+        xs = [a + i * d for i in range(5)]
+    elif kind == 1:
+        a, q = r.randint(2, 6), r.choice([2, 3])
+        xs = [a * q ** i for i in range(5)]
+    elif kind == 2:
+        a = r.randint(1, 9)
+        xs = [(a + i) ** 2 for i in range(5)]
+    elif kind == 3:
+        a, b = r.randint(1, 9), r.randint(2, 12)
+        xs = [a, b]
+        while len(xs) < 5:
+            xs.append(xs[-1] + xs[-2])
+    else:
+        a, d = r.randint(2, 20), r.randint(1, 5)
+        xs, step = [a], d
+        while len(xs) < 5:
+            xs.append(xs[-1] + step)
+            step += d
+    body = ", ".join(fmt(x) for x in xs[:-1])
+    return f"${body}, \\ldots$", fmt(xs[-1])
+
+
+ROMAN = ((100, "C"), (90, "XC"), (50, "L"), (40, "XL"),
+         (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"))
+
+
+def to_roman(n: int) -> str:
+    out = ""
+    for v, s in ROMAN:
+        while n >= v:
+            out += s
+            n -= v
+    return out
+
+
+def rzymskie(r):
+    """Both directions, and nothing longer than eight letters: past that the
+    exercise is transcription rather than arithmetic."""
+    n = r.randint(4, 399)
+    s = to_roman(n)
+    while len(s) > 8:
+        n = r.randint(4, 399)
+        s = to_roman(n)
+    if r.random() < 0.5:
+        return f"{s}", fmt(n)
+    return f"${fmt(n)}$ rzymskimi", s
 
 
 def mieszane(r, draws):
@@ -255,108 +612,289 @@ def mieszane(r, draws):
 # ------------------------------------------------------------------
 #  The sets, in the order the reader meets them.
 #
-#  The list IS the ladder: one star, then two, then three. Renaming or
-#  reordering is free, but a SEED IS NOT -- it is what makes set 7 the same
-#  forty exercises this month as last month, which is the only reason timing
-#  yourself against it twice means anything. Give a new set a new seed and
-#  never reuse or renumber an old one.
+#  The list IS the ladder, and it is now three blocks long because the book is
+#  a three-month course: Fundament, Tempo, Wyzwanie. A block is a chapter, and
+#  tools/gen_plan.py reads this list to lay the blocks over thirteen weeks --
+#  which is why every set carries a FAMILY. Two sets of the same family on
+#  consecutive days is blocked practice; the plan interleaves them, and it can
+#  only do that if the list says what each set drills.
+#
+#  Renaming and reordering is free. A SEED IS NOT -- it is what makes set 7 the
+#  same forty exercises this month as last month, which is the only reason
+#  timing yourself against it twice means anything. Give a new set a new seed,
+#  and never reuse or renumber an old one. Seeds 1001--1025 are the first
+#  edition's; everything added for the three-month course takes 1101 upwards,
+#  and the gap is deliberate so the two allocations cannot grow into each
+#  other.
 # ------------------------------------------------------------------
+
+class Set(NamedTuple):
+    name: str        # file stem, prefixed with its position in the book
+    title: str       # printed at the head of the set
+    block: int       # 1 Fundament, 2 Tempo, 3 Wyzwanie -- one chapter each
+    stars: int
+    secs: float      # SECONDS PER EXERCISE; the target time is secs * N
+    cols: int
+    seed: int
+    family: str      # what it drills, for the plan's interleaving
+    build: Callable
+    wide: bool = False   # \zz rather than \z: a question that needs the width
+
+
 SETS = [
-    # (filename, title, stars, target, columns, seed, builder)
+    # ---------------------------------------------------------------
+    #  Blok I -- Fundament. One star. Nothing here needs a method the
+    #  reader does not already have; what it needs is speed.
+    # ---------------------------------------------------------------
+    Set("01-dodawanie-2c", "Dodawanie dwucyfrowe", 1, 1, 5, 3, 1001, "dodawanie",
+        lambda r: distinct(N, lambda: dodawanie(r, 11, 99))),
+    Set("02-odejmowanie-2c", "Odejmowanie dwucyfrowe", 1, 1, 5, 3, 1002, "odejmowanie",
+        lambda r: distinct(N, lambda: odejmowanie(r, 11, 99))),
+    Set("03-mnozenie-tabliczka", "Tabliczka mnożenia", 1, 1, 4, 3, 1003, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 2, 9, 2, 9))),
+    Set("04-dzielenie-tabliczka", "Dzielenie w tabliczce", 1, 1, 5, 3, 1004, "dzielenie",
+        lambda r: distinct(N, lambda: dzielenie(r, 2, 9, 2, 9))),
+    Set("05-dopelnienia", "Dopełnienia do okrągłych", 1, 1, 4.5, 3, 1015, "dopelnienia",
+        lambda r: distinct(N, lambda: dopelnienia(r))),
+    Set("06-podwajanie", "Podwajanie i połowienie", 1, 1, 4.5, 2, 1016, "podwajanie",
+        lambda r: distinct(N, lambda: podwajanie(r))),
+    Set("07-dodawanie-2c-b", "Dodawanie dwucyfrowe II", 1, 1, 5, 3, 1101, "dodawanie",
+        lambda r: distinct(N, lambda: dodawanie(r, 11, 99))),
+    Set("08-mnozenie-tabliczka-b", "Tabliczka mnożenia II", 1, 1, 4, 3, 1102, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 2, 9, 2, 9))),
+    Set("09-cztery-skladniki", "Cztery składniki", 1, 1, 6, 3, 1103, "dodawanie",
+        lambda r: distinct(N, lambda: cztery_skladniki(r))),
+    Set("10-odejmowanie-2c-b", "Odejmowanie dwucyfrowe II", 1, 1, 5, 3, 1104, "odejmowanie",
+        lambda r: distinct(N, lambda: odejmowanie(r, 11, 99))),
+    Set("11-jednostki", "Jednostki", 1, 1, 5, 3, 1105, "jednostki",
+        lambda r: distinct(N, lambda: jednostki(r))),
+    Set("12-dzielenie-tabliczka-b", "Dzielenie w tabliczce II", 1, 1, 5, 3, 1106, "dzielenie",
+        lambda r: distinct(N, lambda: dzielenie(r, 2, 9, 2, 9))),
+    Set("13-rownania", "Równania jednokrokowe", 1, 1, 5.5, 3, 1107, "rownania",
+        lambda r: distinct(N, lambda: rownania(r))),
+    Set("14-ujemne", "Liczby ujemne", 1, 1, 5.5, 3, 1108, "ujemne",
+        lambda r: distinct(N, lambda: ujemne(r))),
+    Set("15-dopelnienia-b", "Dopełnienia do okrągłych II", 1, 1, 4.5, 3, 1109, "dopelnienia",
+        lambda r: distinct(N, lambda: dopelnienia(r))),
+    Set("16-suma-cyfr", "Suma cyfr", 1, 1, 5, 2, 1110, "cyfry",
+        lambda r: distinct(N, lambda: suma_cyfr(r))),
+    Set("17-mnozenie-tabliczka-c", "Tabliczka mnożenia III", 1, 1, 4, 3, 1111, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 2, 9, 2, 9))),
+    Set("18-czas", "Ile minut", 1, 1, 6, 2, 1112, "czas",
+        lambda r: distinct(N, lambda: czas(r))),
+    Set("19-podwajanie-b", "Podwajanie i połowienie II", 1, 1, 4.5, 2, 1113, "podwajanie",
+        lambda r: distinct(N, lambda: podwajanie(r))),
+    Set("20-zaokraglanie", "Zaokrąglanie", 1, 1, 5, 2, 1114, "zaokraglanie",
+        lambda r: distinct(N, lambda: zaokraglanie(r))),
+    Set("21-dodawanie-2c-c", "Dodawanie dwucyfrowe III", 1, 1, 5, 3, 1115, "dodawanie",
+        lambda r: distinct(N, lambda: dodawanie(r, 11, 99))),
+    Set("22-odejmowanie-2c-c", "Odejmowanie dwucyfrowe III", 1, 1, 5, 3, 1116, "odejmowanie",
+        lambda r: distinct(N, lambda: odejmowanie(r, 11, 99))),
+    Set("23-jednostki-b", "Jednostki II", 1, 1, 5, 3, 1117, "jednostki",
+        lambda r: distinct(N, lambda: jednostki(r))),
+    Set("24-mieszane-start", "Mieszane — start", 1, 1, 5.5, 3, 1118, "mieszane",
+        lambda r: mieszane(r, [
+            lambda: dodawanie(r, 11, 99),
+            lambda: odejmowanie(r, 11, 99),
+            lambda: mnozenie(r, 2, 9, 2, 9),
+            lambda: dzielenie(r, 2, 9, 2, 9),
+        ])),
 
-    # -- one star: the warm-ups -------------------------------------
-    ("01-dodawanie-2c", "Dodawanie dwucyfrowe", 1, "3:20", 3, 1001,
-     lambda r: distinct(N, lambda: dodawanie(r, 11, 99))),
-    ("02-odejmowanie-2c", "Odejmowanie dwucyfrowe", 1, "3:20", 3, 1002,
-     lambda r: distinct(N, lambda: odejmowanie(r, 11, 99))),
-    ("03-mnozenie-tabliczka", "Tabliczka mnożenia", 1, "2:40", 3, 1003,
-     lambda r: distinct(N, lambda: mnozenie(r, 2, 9, 2, 9))),
-    ("04-dzielenie-tabliczka", "Dzielenie w tabliczce", 1, "3:20", 3, 1004,
-     lambda r: distinct(N, lambda: dzielenie(r, 2, 9, 2, 9))),
-    ("05-dopelnienia", "Dopełnienia do okrągłych", 1, "3:00", 3, 1015,
-     lambda r: distinct(N, lambda: dopelnienia(r))),
-    ("06-podwajanie", "Podwajanie i połowienie", 1, "3:00", 2, 1016,
-     lambda r: distinct(N, lambda: podwajanie(r))),
+    # ---------------------------------------------------------------
+    #  Blok II -- Tempo. Two stars. Three digits, percentages, decimals,
+    #  remainders: the working range, and where most of the book lives.
+    # ---------------------------------------------------------------
+    Set("25-dodawanie-3c", "Dodawanie trzycyfrowe", 2, 2, 8, 3, 1005, "dodawanie",
+        lambda r: distinct(N, lambda: dodawanie(r, 101, 899))),
+    Set("26-odejmowanie-3c", "Odejmowanie trzycyfrowe", 2, 2, 8, 3, 1006, "odejmowanie",
+        lambda r: distinct(N, lambda: odejmowanie(r, 101, 899))),
+    Set("27-mnozenie-2x1", "Mnożenie dwucyfrowe przez jednocyfrowe", 2, 2, 8, 3, 1007, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 12, 99, 3, 9))),
+    Set("28-dzielenie-3c", "Dzielenie trzycyfrowe", 2, 2, 9, 3, 1008, "dzielenie",
+        lambda r: distinct(N, lambda: dzielenie(r, 3, 12, 11, 40))),
+    Set("29-trzy-skladniki", "Trzy składniki", 2, 2, 9, 3, 1017, "dodawanie",
+        lambda r: distinct(N, lambda: trzy_skladniki(r))),
+    Set("30-triki-mnozenia", "Mnożenie na skróty", 2, 2, 6.75, 3, 1018, "triki",
+        lambda r: distinct(N, lambda: triki(r))),
+    Set("31-reszty", "Reszty z dzielenia", 2, 2, 7.5, 2, 1020, "reszty",
+        lambda r: distinct(N, lambda: reszty(r))),
+    Set("32-pierwiastki", "Pierwiastki kwadratowe", 2, 2, 6, 2, 1021, "pierwiastki",
+        lambda r: pierwiastki(r, N)),
+    Set("33-procenty", "Procenty w pamięci", 2, 2, 8, 3, 1010, "procenty",
+        lambda r: distinct(N, lambda: procenty(r))),
+    Set("34-czesci", "Części liczby", 2, 2, 7.5, 3, 1019, "czesci",
+        lambda r: distinct(N, lambda: czesci(r))),
+    Set("35-dziesietne", "Ułamki dziesiętne", 2, 2, 7.5, 3, 1022, "dziesietne",
+        lambda r: distinct(N, lambda: dziesietne(r))),
+    Set("36-kolejnosc", "Kolejność działań", 2, 2, 12.5, 2, 1009, "kolejnosc",
+        lambda r: distinct(N, lambda: kolejnosc(r))),
+    Set("37-mieszane-szybkie", "Mieszane — szybkie", 2, 2, 9, 3, 1013, "mieszane",
+        lambda r: mieszane(r, [
+            lambda: dodawanie(r, 11, 99),
+            lambda: odejmowanie(r, 11, 99),
+            lambda: mnozenie(r, 3, 12, 3, 9),
+            lambda: dzielenie(r, 2, 9, 3, 12),
+        ])),
+    Set("38-dodawanie-3c-b", "Dodawanie trzycyfrowe II", 2, 2, 8, 3, 1119, "dodawanie",
+        lambda r: distinct(N, lambda: dodawanie(r, 101, 899))),
+    Set("39-odejmowanie-3c-b", "Odejmowanie trzycyfrowe II", 2, 2, 8, 3, 1120, "odejmowanie",
+        lambda r: distinct(N, lambda: odejmowanie(r, 101, 899))),
+    Set("40-mnozenie-2x1-b", "Mnożenie dwucyfrowe przez jednocyfrowe II", 2, 2, 8, 3, 1121, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 12, 99, 3, 9))),
+    Set("41-dzielenie-3c-b", "Dzielenie trzycyfrowe II", 2, 2, 9, 3, 1122, "dzielenie",
+        lambda r: distinct(N, lambda: dzielenie(r, 3, 12, 11, 40))),
+    Set("42-triki-mnozenia-b", "Mnożenie na skróty II", 2, 2, 6.75, 3, 1123, "triki",
+        lambda r: distinct(N, lambda: triki(r))),
+    Set("43-roznica-kwadratow", "Para wokół okrągłej", 2, 2, 7, 3, 1124, "kwadraty",
+        lambda r: distinct(N, lambda: roznica_kwadratow(r))),
+    Set("44-procenty-b", "Procenty w pamięci II", 2, 2, 8, 3, 1125, "procenty",
+        lambda r: distinct(N, lambda: procenty(r))),
+    Set("45-reszty-b", "Reszty z dzielenia II", 2, 2, 7.5, 2, 1126, "reszty",
+        lambda r: distinct(N, lambda: reszty(r))),
+    Set("46-ulamki", "Ułamki zwykłe", 2, 2, 8, 3, 1127, "ulamki",
+        lambda r: distinct(N, lambda: ulamki(r))),
+    Set("47-dziesietne-b", "Ułamki dziesiętne II", 2, 2, 7.5, 3, 1128, "dziesietne",
+        lambda r: distinct(N, lambda: dziesietne(r))),
+    Set("48-srednia", "Średnia", 2, 2, 9, 2, 1129, "srednia",
+        lambda r: distinct(N, lambda: srednia(r)), True),
+    Set("49-czesci-b", "Części liczby II", 2, 2, 7.5, 3, 1130, "czesci",
+        lambda r: distinct(N, lambda: czesci(r))),
+    Set("50-potegi", "Potęgi", 2, 2, 7, 3, 1131, "potegi",
+        lambda r: potegi(r, N)),
+    Set("51-nwd-nww", "NWD i NWW", 2, 2, 8, 3, 1132, "nwd",
+        lambda r: distinct(N, lambda: nwd_nww(r))),
+    Set("52-trzy-skladniki-b", "Trzy składniki II", 2, 2, 9, 3, 1133, "dodawanie",
+        lambda r: distinct(N, lambda: trzy_skladniki(r))),
+    Set("53-podzielnosc", "Podzielność", 2, 2, 7, 2, 1134, "podzielnosc",
+        lambda r: distinct(N, lambda: podzielnosc(r)), True),
+    Set("54-procent-ile", "Ile to procent", 2, 2, 9, 2, 1135, "procenty",
+        lambda r: distinct(N, lambda: procent_ile(r)), True),
+    Set("55-dzielenie-reszta", "Dzielenie z resztą", 2, 2, 9, 2, 1136, "reszty",
+        lambda r: distinct(N, lambda: dzielenie_reszta(r))),
+    Set("56-rzymskie", "Liczby rzymskie", 2, 2, 7, 2, 1137, "rzymskie",
+        lambda r: distinct(N, lambda: rzymskie(r))),
+    Set("57-kolejnosc-b", "Kolejność działań II", 2, 2, 12.5, 2, 1138, "kolejnosc",
+        lambda r: distinct(N, lambda: kolejnosc(r))),
+    Set("58-mieszane-tempo", "Mieszane — tempo", 2, 2, 9, 3, 1139, "mieszane",
+        lambda r: mieszane(r, [
+            lambda: dodawanie(r, 101, 899),
+            lambda: mnozenie(r, 12, 99, 3, 9),
+            lambda: procenty(r),
+            lambda: reszty(r),
+        ])),
 
-    # -- two stars: the working range -------------------------------
-    ("07-dodawanie-3c", "Dodawanie trzycyfrowe", 2, "5:20", 3, 1005,
-     lambda r: distinct(N, lambda: dodawanie(r, 101, 899))),
-    ("08-odejmowanie-3c", "Odejmowanie trzycyfrowe", 2, "5:20", 3, 1006,
-     lambda r: distinct(N, lambda: odejmowanie(r, 101, 899))),
-    ("09-trzy-skladniki", "Trzy składniki", 2, "6:00", 3, 1017,
-     lambda r: distinct(N, lambda: trzy_skladniki(r))),
-    ("10-mnozenie-2x1", "Mnożenie dwucyfrowe przez jednocyfrowe", 2, "5:20", 3, 1007,
-     lambda r: distinct(N, lambda: mnozenie(r, 12, 99, 3, 9))),
-    ("11-dzielenie-3c", "Dzielenie trzycyfrowe", 2, "6:00", 3, 1008,
-     lambda r: distinct(N, lambda: dzielenie(r, 3, 12, 11, 40))),
-    ("12-triki-mnozenia", "Mnożenie na skróty", 2, "4:30", 3, 1018,
-     lambda r: distinct(N, lambda: triki(r))),
-    ("13-reszty", "Reszty z dzielenia", 2, "5:00", 2, 1020,
-     lambda r: distinct(N, lambda: reszty(r))),
-    ("14-pierwiastki", "Pierwiastki kwadratowe", 2, "4:00", 2, 1021,
-     lambda r: pierwiastki(r, N)),
-    ("15-procenty", "Procenty w pamięci", 2, "5:20", 3, 1010,
-     lambda r: distinct(N, lambda: procenty(r))),
-    ("16-czesci", "Części liczby", 2, "5:00", 3, 1019,
-     lambda r: distinct(N, lambda: czesci(r))),
-    ("17-dziesietne", "Ułamki dziesiętne", 2, "5:00", 3, 1022,
-     lambda r: distinct(N, lambda: dziesietne(r))),
-    ("18-kolejnosc", "Kolejność działań", 2, "8:20", 2, 1009,
-     lambda r: distinct(N, lambda: kolejnosc(r))),
-    ("19-mieszane-szybkie", "Mieszane — szybkie", 2, "6:00", 3, 1013,
-     lambda r: mieszane(r, [
-         lambda: dodawanie(r, 11, 99),
-         lambda: odejmowanie(r, 11, 99),
-         lambda: mnozenie(r, 3, 12, 3, 9),
-         lambda: dzielenie(r, 2, 9, 3, 12),
-     ])),
-
-    # -- three stars: the long ones ---------------------------------
-    ("20-kwadraty", "Kwadraty", 3, "6:40", 3, 1011,
-     lambda r: kwadraty(r, N)),
-    ("21-mnozenie-3x1", "Mnożenie trzycyfrowe przez jednocyfrowe", 3, "8:00", 3, 1023,
-     lambda r: distinct(N, lambda: mnozenie(r, 102, 899, 3, 9))),
-    ("22-mnozenie-2x2", "Mnożenie dwucyfrowe", 3, "10:00", 3, 1012,
-     lambda r: distinct(N, lambda: mnozenie(r, 12, 49, 12, 49))),
-    ("23-procenty-trudne", "Procenty — trudniejsze", 3, "6:30", 3, 1024,
-     lambda r: distinct(N, lambda: procenty_trudne(r))),
-    ("24-mieszane-dluzsze", "Mieszane — dłuższe", 3, "9:00", 2, 1014,
-     lambda r: mieszane(r, [
-         lambda: dodawanie(r, 101, 999),
-         lambda: odejmowanie(r, 101, 999),
-         lambda: kolejnosc(r),
-         lambda: procenty(r),
-     ])),
-    ("25-mieszane-final", "Mieszane — finał", 3, "11:00", 2, 1025,
-     lambda r: mieszane(r, [
-         lambda: mnozenie(r, 12, 49, 12, 49),
-         lambda: dzielenie(r, 3, 12, 11, 40),
-         lambda: procenty_trudne(r),
-         lambda: dziesietne(r),
-         lambda: kolejnosc(r),
-     ])),
+    # ---------------------------------------------------------------
+    #  Blok III -- Wyzwanie. Three stars. Four digits, two-digit products,
+    #  brackets, and the percentage read backwards.
+    # ---------------------------------------------------------------
+    Set("59-kwadraty", "Kwadraty", 3, 3, 10, 3, 1011, "kwadraty",
+        lambda r: kwadraty(r, N)),
+    Set("60-mnozenie-3x1", "Mnożenie trzycyfrowe przez jednocyfrowe", 3, 3, 12, 3, 1023, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 102, 899, 3, 9))),
+    Set("61-mnozenie-2x2", "Mnożenie dwucyfrowe", 3, 3, 15, 3, 1012, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 12, 49, 12, 49))),
+    Set("62-procenty-trudne", "Procenty — trudniejsze", 3, 3, 9.75, 3, 1024, "procenty",
+        lambda r: distinct(N, lambda: procenty_trudne(r))),
+    Set("63-mieszane-dluzsze", "Mieszane — dłuższe", 3, 3, 13.5, 2, 1014, "mieszane",
+        lambda r: mieszane(r, [
+            lambda: dodawanie(r, 101, 999),
+            lambda: odejmowanie(r, 101, 999),
+            lambda: kolejnosc(r),
+            lambda: procenty(r),
+        ])),
+    Set("64-mieszane-final", "Mieszane — finał", 3, 3, 16.5, 2, 1025, "mieszane",
+        lambda r: mieszane(r, [
+            lambda: mnozenie(r, 12, 49, 12, 49),
+            lambda: dzielenie(r, 3, 12, 11, 40),
+            lambda: procenty_trudne(r),
+            lambda: dziesietne(r),
+            lambda: kolejnosc(r),
+        ])),
+    Set("65-dodawanie-4c", "Dodawanie czterocyfrowe", 3, 3, 12, 3, 1140, "dodawanie",
+        lambda r: distinct(N, lambda: dodawanie(r, 1001, 8999))),
+    Set("66-odejmowanie-4c", "Odejmowanie czterocyfrowe", 3, 3, 12, 3, 1141, "odejmowanie",
+        lambda r: distinct(N, lambda: odejmowanie(r, 1001, 8999))),
+    Set("67-kwadraty-konc5", "Kwadraty piątek", 3, 3, 10, 3, 1142, "kwadraty",
+        lambda r: kwadraty_konc5(r, N)),
+    Set("68-mnozenie-2x2-b", "Mnożenie dwucyfrowe II", 3, 3, 15, 3, 1143, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 12, 49, 12, 49))),
+    Set("69-dopelnienia-duze", "Dopełnienia do tysięcy", 3, 3, 9, 3, 1144, "dopelnienia",
+        lambda r: distinct(N, lambda: dopelnienia_duze(r))),
+    Set("70-mnozenie-3x1-b", "Mnożenie trzycyfrowe przez jednocyfrowe II", 3, 3, 12, 3, 1145, "mnozenie",
+        lambda r: distinct(N, lambda: mnozenie(r, 102, 899, 3, 9))),
+    Set("71-kwadraty-b", "Kwadraty II", 3, 3, 12, 3, 1146, "kwadraty",
+        lambda r: kwadraty(r, N, 51)),
+    Set("72-triki-duze", "Mnożenie na skróty III", 3, 3, 9, 3, 1147, "triki",
+        lambda r: distinct(N, lambda: triki_duze(r))),
+    Set("73-pierwiastki-b", "Pierwiastki kwadratowe II", 3, 3, 8, 2, 1148, "pierwiastki",
+        lambda r: pierwiastki(r, N, 20)),
+    Set("74-dziesietne-mnozenie", "Dziesiętne razy całkowita", 3, 3, 10, 3, 1149, "dziesietne",
+        lambda r: distinct(N, lambda: dziesietne_mnozenie(r))),
+    Set("75-kolejnosc-nawiasy", "Nawiasy i potęgi", 3, 3, 14, 2, 1150, "kolejnosc",
+        lambda r: distinct(N, lambda: kolejnosc_nawiasy(r))),
+    Set("76-procent-bazy", "Procent — szukana całość", 3, 3, 10, 2, 1151, "procenty",
+        lambda r: distinct(N, lambda: procent_bazy(r)), True),
+    Set("77-podwyzki", "Podwyżki i obniżki", 3, 3, 10, 2, 1152, "procenty",
+        lambda r: distinct(N, lambda: podwyzki(r)), True),
+    Set("78-dzielenie-4c", "Dzielenie czterocyfrowe", 3, 3, 13, 3, 1153, "dzielenie",
+        lambda r: distinct(N, lambda: dzielenie(r, 3, 12, 101, 799))),
+    Set("79-ciagi", "Ciągi — następny wyraz", 3, 3, 12, 2, 1154, "ciagi",
+        lambda r: distinct(N, lambda: ciag(r)), True),
+    Set("80-procenty-trudne-b", "Procenty — trudniejsze II", 3, 3, 9.75, 3, 1155, "procenty",
+        lambda r: distinct(N, lambda: procenty_trudne(r))),
+    Set("81-mieszane-final-b", "Mieszane — finał II", 3, 3, 16.5, 2, 1156, "mieszane",
+        lambda r: mieszane(r, [
+            lambda: mnozenie(r, 12, 49, 12, 49),
+            lambda: dzielenie(r, 3, 12, 11, 40),
+            lambda: procenty_trudne(r),
+            lambda: kolejnosc_nawiasy(r),
+            lambda: dziesietne(r),
+        ])),
 ]
 
+BLOCK_TITLES = {1: "Fundament", 2: "Tempo", 3: "Wyzwanie"}
 
-def render(name, title, stars, target, cols, seed, build) -> str:
-    r = random.Random(seed)
-    items = build(r)
+
+def render(s: Set) -> str:
+    r = random.Random(s.seed)
+    items = s.build(r)
 
     # The column break is written here, not left to the typesetter. A set is
     # laid out as one unbreakable row of boxes so that it cannot be split from
     # its own scoring box (see book/preamble.tex), and that means something has
     # to say where each box ends. split() balances them: forty over three
     # columns is 14/13/13, not 14/14/12.
+    macro = "zz" if s.wide else "z"
     body, at = "", 0
-    for i, count in enumerate(split(len(items), cols)):
+    for i, count in enumerate(split(len(items), s.cols)):
         if i:
             body += "  \\btnc\n"
         for q, a in items[at:at + count]:
-            body += f"  \\z{{{q}}}{{{a}}}\n"
+            body += f"  \\{macro}{{{q}}}{{{a}}}\n"
         at += count
 
-    return HEADER.format(seed=seed, title=title, stars=stars,
-                         target=target, cols=cols, body=body)
+    return HEADER.format(seed=s.seed, title=s.title, stars=s.stars,
+                         target=target(s.secs), cols=s.cols, body=body)
+
+
+def audit() -> None:
+    """Two things the tree cannot show and no build would ever complain about.
+
+    A REPEATED SEED is two sets carrying the same forty exercises under two
+    titles -- the reader drills the same page twice and the second timing is
+    not a second measurement. At twenty-five sets that was visible by eye; at
+    eighty-one, written in blocks and copied from each other, it is not.
+
+    A REPEATED NAME silently drops a set: the later one overwrites the earlier
+    file, the include list names it once, and the book is one set short with
+    every gate green.
+    """
+    for what, seen in (("seed", Counter(s.seed for s in SETS)),
+                       ("name", Counter(s.name for s in SETS))):
+        dupes = [k for k, n in seen.items() if n > 1]
+        if dupes:
+            raise SystemExit(f"gen_sets: repeated {what}(s): "
+                             + ", ".join(str(d) for d in sorted(dupes)))
 
 
 def main() -> int:
@@ -364,12 +902,13 @@ def main() -> int:
     p.add_argument("--check", action="store_true")
     a = p.parse_args()
 
+    audit()
     OUT.mkdir(parents=True, exist_ok=True)
     stale, total = [], 0
-    for name, title, stars, target, cols, seed, build in SETS:
-        text = render(name, title, stars, target, cols, seed, build)
-        total += text.count("\\z{")
-        dest = OUT / f"{name}.tex"
+    for s in SETS:
+        text = render(s)
+        total += text.count("\\z{") + text.count("\\zz{")
+        dest = OUT / f"{s.name}.tex"
         cur = dest.read_text(encoding="utf8") if dest.exists() else None
         if cur == text:
             continue
@@ -378,23 +917,30 @@ def main() -> int:
         else:
             dest.write_text(text, encoding="utf8")
 
-    # The include list is generated too: a set added to SETS and forgotten in
-    # structure.tex is a set nobody ever sees, and every other check passes.
-    inc = ("% GENERATED by tools/gen_sets.py -- do not edit.\n"
-           + "".join(f"\\input{{sets/generated/{n}}}\n" for n, *_ in SETS))
-    incdest = OUT / "_all.tex"
-    cur = incdest.read_text(encoding="utf8") if incdest.exists() else None
-    if cur != inc:
+    # The include lists are generated too, one per block, because a block is a
+    # chapter: a set added to SETS and forgotten in structure.tex is a set
+    # nobody ever sees, and every other check passes.
+    lists = {}
+    for b in sorted(BLOCK_TITLES):
+        lists[f"_blok-{b}.tex"] = (
+            "% GENERATED by tools/gen_sets.py -- do not edit.\n"
+            + "".join(f"\\input{{sets/generated/{s.name}}}\n"
+                      for s in SETS if s.block == b))
+    for fname, text in lists.items():
+        dest = OUT / fname
+        cur = dest.read_text(encoding="utf8") if dest.exists() else None
+        if cur == text:
+            continue
         if a.check:
-            stale.append(incdest.relative_to(ROOT))
+            stale.append(dest.relative_to(ROOT))
         else:
-            incdest.write_text(inc, encoding="utf8")
+            dest.write_text(text, encoding="utf8")
 
     # And the other direction. Renaming a set leaves the old file behind, and
-    # nothing above would ever look at it again: it is not in _all.tex, so it
-    # is not in the book, and it is not in SETS, so no check compares it. It
+    # nothing above would ever look at it again: it is not in a block list, so
+    # it is not in the book, and it is not in SETS, so no check compares it. It
     # would sit in the tree looking like a set the book contains.
-    keep = {f"{n}.tex" for n, *_ in SETS} | {"_all.tex"}
+    keep = {f"{s.name}.tex" for s in SETS} | set(lists)
     for f in sorted(OUT.glob("*.tex")):
         if f.name in keep:
             continue
@@ -404,11 +950,15 @@ def main() -> int:
             f.unlink()
 
     if stale:
-        for s in stale:
-            print(f"  STALE   {s}")
+        for s2 in stale:
+            print(f"  STALE   {s2}")
         print(f"\n{len(stale)} generated file(s) out of date. Run `make sets`.")
         return 1
-    print(f"  {len(SETS)} generated sets, {total} exercises")
+
+    for b, t in BLOCK_TITLES.items():
+        n = sum(1 for s in SETS if s.block == b)
+        print(f"  blok {b} {t:<12} {n:>3} sets, {n * N:>5} exercises")
+    print(f"  {'':<19}{len(SETS):>3} sets, {total:>5} exercises")
     return 0
 
 

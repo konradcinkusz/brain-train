@@ -8,12 +8,12 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 
 | | Done | Remaining |
 |---|---|---|
-| Book (A4) | 29 sets, 1064 exercises, front matter, TOC, answer appendix | — |
-| Build | `make book`, three gates, CI on every push and PR, tag-driven release | — |
+| Book (A4) | 85 sets, 3304 exercises, three difficulty blocks, front matter, TOC, answer appendix | — |
+| Build | `make book`, four gates, CI on every push and PR, tag-driven release | — |
 | Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
 | Docs | README, `CONTRIBUTING.md`, this file | — |
 
-The book is **27 pages, 29 sets, 1064 exercises, zero errors, zero unresolved
+The book is **66 pages, 85 sets, 3304 exercises, zero errors, zero unresolved
 references, zero overfull boxes**.
 
 **Re-measure those numbers from the build in front of you.** Page counts and
@@ -79,6 +79,19 @@ free. Changing a seed silently replaces forty exercises, and a reader comparing
 this month's time against last month's is then comparing two different sets --
 which is the one thing this book exists to make possible.
 
+Seeds `1001--1025` are the first edition's and `1101` upwards is the
+three-month course's, with the gap left so the two allocations cannot grow into
+each other. `audit()` fails the build on a repeated seed or a repeated file
+name, because at eighty-one sets written in blocks and copied from each other
+neither is visible by eye: a repeated seed is two titles over one set of forty
+exercises, and a repeated name silently drops a set with every gate green.
+
+**The target time is derived, never typed.** A set declares SECONDS PER
+EXERCISE and `target()` multiplies by `N`. A target written out by hand is a
+number that stops being true the day `N` moves, and eighty-one of them would
+have to be re-guessed one at a time. The rule reproduces all twenty-five of the
+first edition's targets exactly, which is how it was checked.
+
 **Arithmetic is generated; puzzles are not.** The book is scored on volume, and
 several hundred hand-typed sums is where arithmetic slips hide — the generator
 computes each answer with the same three lines that lay out its question, so a
@@ -96,10 +109,41 @@ and normalising one into the other is a silent edit to 38 exercises.
 **An answer shows the result plus at most a one-line hint.** No step-by-step,
 no teaching — the repo's own rule, from commit `01c9d37`.
 
+**A negative answer is `$-8$`, never `-8`.** The appendix is set in text mode,
+where a bare hyphen is a hyphen and not a minus sign. `sgn()` in the generator
+is what puts it in maths, and the builders that can land below zero
+(`kolejnosc`, `kolejnosc_nawiasy`, `ujemne`) call it. The first edition shipped
+one of these, in set 18, and nothing in the repository could see it — it was
+found by `checkanswers.py` on its first run, as a printed answer that would not
+parse as a number.
+
 **Never state a count of occurrences in prose.** A tally decays silently and no
 check can see it. Name the rule and the places it applies.
 
 ---
+
+## Three blocks, and one reordering that will not be repeated
+
+The book is a three-month course, so the sets are grouped into **Fundament**,
+**Tempo** and **Wyzwanie** -- one block per chapter, `_blok-N.tex` per block,
+generated alongside the sets for the reason the include list has always been
+generated.
+
+Fitting the first edition's twenty-five sets into that ladder **renumbered
+them**: what was Zestaw 7 is Zestaw 25. That was safe exactly once and is not
+safe again. It is safe now because no reader can have recorded a time against
+the old numbers -- v1.0.0's release carries no assets at all (#21), so the book
+has never been distributed as a PDF. **From here the list is append-only**: a
+new set goes at the end of its block, and a set that would sit better elsewhere
+stays where it is. The exercises themselves did not move -- all twenty-five
+carried over character for character, seeds untouched, which was checked
+against `HEAD` rather than assumed.
+
+**A set also declares a FAMILY**, which is what it drills. Nothing in the book
+prints it; it is there so a plan can interleave the sets rather than run six
+addition sets on six consecutive days. Blocked practice reads as faster while
+you do it and is worse a week later, which is the same finding this book's
+front matter already carries about rereading.
 
 ## The layout, and why its numbers are what they are
 
@@ -182,12 +226,48 @@ Everything below is in `book/preamble.tex` beside the code it governs.
 
 ---
 
+## The four gates
+
+Three are in `tools/` and one is in the preamble. They are listed in the README
+for a reader; what belongs here is what each one CANNOT see, because that is
+what the next one is for.
+
+- **`checklog.py`** reads the log: errors, unresolved references, overfull
+  boxes, non-convergence. It cannot see anything that is typographically valid.
+- **`gen_sets.py --check`** compares the tree against the generator, both
+  directions, and guards the per-block include lists. It cannot see whether the
+  generator is right.
+- **`checkanswers.py`** parses the question that reached the page and works the
+  answer out by a second route. **This is the only check here that looks at the
+  page rather than at the code that made it**, and it exists because the
+  repository's own argument for generating the arithmetic -- that one piece of
+  code lays out the question and computes its answer, so the two cannot
+  disagree -- is exactly what makes a builder that is CONSISTENTLY wrong
+  invisible. A `-` where the code means `+` prints a matching pair.
+
+  **An unknown question shape is a failure, not a skip.** A checker that
+  silently passes over what it does not recognise stops measuring the day
+  somebody adds a builder and goes on printing a green line about the sets it
+  still understands. Adding a builder therefore means adding its shape to
+  `RULES`, and that is the price of the check meaning anything.
+
+- **The split-set check** lives in `preamble.tex`, because it needs page
+  numbers that only exist during the run.
+
 ## Prove a new check fires before trusting it
 
 `make drift` was verified by editing the generator without regenerating
 (`STALE`, exit 1). The split-set check was verified by putting a `\newpage`
 between a set's grid and its foot: every set reported `Zestaw N is split`, and
 `make book` exited 1. A check that has never failed may be measuring nothing.
+
+`checkanswers.py` was verified by two mutations, one for each half of what it
+claims. Making `procenty` divide by ten instead of a hundred reported forty
+wrong answers naming the set, the question and both numbers; renaming
+`suma cyfr` to `iloczyn cyfr` -- a builder the checker has no rule for --
+reported forty unrecognised and failed, rather than quietly checking the other
+three thousand two hundred. Both were reverted. It found a real defect on its
+first run, before either mutation: see the note on `$-8$` above.
 
 **And retire a check that has stopped measuring.** `checkbadges.py` guarded
 frame numbers in the outer margin. There are no margin numbers now, so it would
