@@ -1,36 +1,103 @@
-name: Build & Release PDF
+# ============================================================
+#  Build the book on a version tag and attach it to the release.
+#
+#  THREE THINGS CHANGED HERE, each for a recorded reason:
+#
+#  1. The trigger matches `v*` AND `V*`. A tag pushed in the other case matches
+#     neither pattern a `v*`-only workflow declares, the workflow never runs,
+#     and the release ships with nothing attached -- a failure mode recorded in
+#     the estate and indistinguishable, from the outside, from a build that
+#     failed.
+#
+#  2. `contents: write` sits on the RELEASE JOB, not at the top level. The
+#     build job publishes nothing and does not need it.
+#
+#  3. The gate is tools/checklog.py, not latexmk's exit code. v1.0.0 is the
+#     worked example of why: its build failed, the release job never ran
+#     because it declares `needs: build`, and the release was left carrying no
+#     assets at all while the README went on advertising a PDF badge. Anything
+#     that reaches a release here has been through the same three checks a pull
+#     request goes through.
+#
+#  WHAT IT SHIPS. The book (book/main-pl-a4.tex), which builds. The Beamer deck
+#  does NOT build -- see issue #21, where XeLaTeX is driven against a T1 font
+#  stack that has no Polish glyphs -- so it is not wired in here. Whether the
+#  deck is fixed, generated from the book, or retired is issue #16.
+#
+#  THE ASSET NAME is year-agnostic on purpose. If issue #8 settles on annual
+#  editions, the year lands in ASSET below and nowhere else.
+# ============================================================
+name: Release book PDF
 
 on:
   push:
     tags:
       - 'v*'
+      - 'V*'
 
 permissions:
-  contents: write
+  contents: read
+
+env:
+  ASSET: trening-mozgu-a4.pdf
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: xu-cheng/latex-action@v4
+
+      - name: Chapters match the deck sources
+        run: python3 tools/convert_deck.py --check
+
+      - name: Build the book
+        # Step level, not an action input: latexmk's exit code is not the gate.
+        # Keep going far enough to produce a log, then let checklog.py decide.
+        continue-on-error: true
+        uses: xu-cheng/latex-action@v4
         with:
-          root_file: main.tex
-          latexmk_use_xelatex: true
-      - name: Rename PDF
-        run: mv main.pdf BrainTrain.pdf
+          working_directory: book
+          root_file: main-pl-a4.tex
+          latexmk_use_xelatex: false
+
+      - name: Install poppler
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+
+      - name: Read the log properly
+        run: python3 tools/checklog.py book/main-pl-a4.log
+
+      - name: Frame badges are in the outer margin
+        run: python3 tools/checkbadges.py book/main-pl-a4.pdf
+
+      - name: Name the asset
+        run: mv book/main-pl-a4.pdf "$ASSET"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: BrainTrain
-          path: BrainTrain.pdf
+          name: book
+          path: ${{ env.ASSET }}
+          if-no-files-found: error
 
   release:
     runs-on: ubuntu-latest
     needs: build
+    timeout-minutes: 10
+    # The only job that publishes, and the only one that can write.
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: BrainTrain
+          name: book
+
+      # if-no-files-found: error above already refuses to upload an empty
+      # artifact, so a release cannot be created from nothing. v1.0.0 shipped
+      # with an empty asset list and this is the step that would have caught it.
+      - name: The asset exists
+        run: test -s "$ASSET"
+
       - uses: softprops/action-gh-release@v2
         with:
-          files: BrainTrain.pdf
+          files: ${{ env.ASSET }}
+          fail_on_unmatched_files: true
