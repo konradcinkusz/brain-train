@@ -24,7 +24,7 @@ BOOKLOG   := $(BOOKDIR)/$(BOOKMAIN).log
 BOOKPDF   := $(BOOKDIR)/$(BOOKMAIN).pdf
 LATEXMK   := latexmk -pdf -interaction=nonstopmode -file-line-error
 
-.PHONY: all book book-only check drift answers sets clean help
+.PHONY: all book book-only check drift answers sets plan clean help
 
 all: book
 
@@ -51,6 +51,7 @@ check: drift answers
 # here -- one per block, because a block is a chapter.
 drift:
 	python3 tools/gen_sets.py --check
+	python3 tools/gen_plan.py --check
 
 ## answers: re-compute every printed answer from the printed question
 #
@@ -61,9 +62,19 @@ drift:
 answers:
 	python3 tools/checkanswers.py
 
-## sets: regenerate the drill sets
+## sets: regenerate the drill sets AND the plan
+#
+# Both, always. The plan is a pure function of the set list -- it names sets by
+# the number they carry in the book -- so a regenerated set list with a stale
+# plan is a plan pointing at the wrong sets. `make plan` alone is for when only
+# the schedule changed.
 sets:
 	python3 tools/gen_sets.py
+	python3 tools/gen_plan.py
+
+## plan: regenerate the thirteen-week plan only
+plan:
+	python3 tools/gen_plan.py
 
 ## clean: remove build artifacts
 clean:

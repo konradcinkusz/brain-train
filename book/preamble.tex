@@ -199,13 +199,50 @@
 % behind on the previous one. A penalty before the glue is what makes the box
 % one piece -- the grid above it is already a single unbreakable box, so with
 % this the whole set moves as a unit.
-\newcommand{\btsetfoot}{%
+%
+% #1 IS HOW MANY TIMES THE SET WILL BE SCORED. One is every drill set: you do
+% it, you time it, and if you come back to it you compare against what you
+% wrote. The benchmark sets take five, because they exist to be repeated on a
+% schedule and five measurements in five separate places is five measurements
+% nobody can lay side by side.
+\newcounter{btrow}
+\newcommand{\btonerow}[1]{%
+  {\color{btgrey}#1.} & \rule[-0.4ex]{5.5em}{0.4pt}
+  & \rule[-0.4ex]{2.5em}{0.4pt}\,/\,\thezad
+  & \rule[-0.4ex]{5.5em}{0.4pt} \\[3.5pt]}
+
+% The rows are accumulated BEFORE the tabular is opened, never looped inside
+% it. A \loop in an alignment body does not survive scanning -- TeX needs to
+% see the & and the row break while it reads the cell, and a conditional hides
+% them. The symptom is an empty table and no error at all. A macro that
+% EXPANDS to cells is fine, which is why \btonerow is plain.
+\newcommand{\btfootbody}{}
+\newcommand{\btmakefootbody}[1]{%
+  \renewcommand{\btfootbody}{}%
+  \setcounter{btrow}{0}%
+  \loop\ifnum\value{btrow}<#1\relax
+    \stepcounter{btrow}%
+    \eappto\btfootbody{\noexpand\btonerow{\thebtrow}}%
+  \repeat
+}
+
+\newcommand{\btsetfoot}[1]{%
   \par\nobreak\vspace{6pt}%
   \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\nobreak\vspace{4pt}%
   \noindent
-  {\bfseries Czas:}~\label{btsetfoot\thezestaw}\rule[-0.4ex]{6em}{0.4pt}\hfill
-  {\bfseries Poprawne:}~\rule[-0.4ex]{3em}{0.4pt}\,/\,\thezad\hfill
-  {\bfseries Data:}~\rule[-0.4ex]{6em}{0.4pt}%
+  \ifnum#1=1\relax
+    {\bfseries Czas:}~\label{btsetfoot\thezestaw}\rule[-0.4ex]{6em}{0.4pt}\hfill
+    {\bfseries Poprawne:}~\rule[-0.4ex]{3em}{0.4pt}\,/\,\thezad\hfill
+    {\bfseries Data:}~\rule[-0.4ex]{6em}{0.4pt}%
+  \else
+    \label{btsetfoot\thezestaw}%
+    \btmakefootbody{#1}%
+    \small
+    \begin{tabular}{@{}r@{\ \ }l@{\quad}l@{\quad}l@{}}
+      & {\bfseries Czas} & {\bfseries Poprawne} & {\bfseries Data} \\[2pt]
+      \btfootbody
+    \end{tabular}%
+  \fi
   \par
 }
 
@@ -233,27 +270,65 @@
   \fi
 }
 
-\newenvironment{zestaw}[4]{%
+% \begin{zestaw}[rows]{title}{stars}{target}{cols}
+%
+% The optional argument is the number of scoring rows and defaults to one, so
+% every set written before it existed calls this unchanged.
+% THE NUMBER A SET COMES UP UNDER IS PART OF THE BOOK'S CONTRACT WITH THE PLAN.
+%
+% The plan prints `Zestaw 41` as a literal, computed by tools/gen_plan.py from
+% the generator's own lists. The number the reader sees comes from a counter
+% stepping through structure.tex. Those are the same thing worked out twice,
+% and nothing made them agree: reorder a chapter and every row of the plan
+% points one set off, silently, with every other gate green.
+%
+% So the generated include lists emit \btexpect{n} before each \input, and a
+% set that comes up under any other number stops the build. A set reached with
+% no expectation at all is an error too -- otherwise an \input added straight
+% to structure.tex would slip past, which is exactly the mistake this guards.
+\newcommand{\btexpectnum}{}
+\newcommand{\btexpect}[1]{\gdef\btexpectnum{#1}}
+
+\newenvironment{zestaw}[5][1]{%
   \refstepcounter{zestaw}%
+  \ifx\btexpectnum\empty
+    \PackageError{trening-mozgu}{%
+      Zestaw \thezestaw\space has no \string\btexpect}{%
+      Every set is included from a generated list in sets/generated/, which
+      emits its number. Add the set to tools/gen_sets.py and run `make sets`
+      rather than putting an \string\input in structure.tex}%
+  \else
+    \ifnum\btexpectnum=\thezestaw\relax\else
+      \PackageError{trening-mozgu}{%
+        Zestaw \thezestaw\space expected number \btexpectnum}{%
+        The plan names sets by number, so the book's order and
+        tools/gen_sets.py's book_order() have to agree. Run `make sets` and
+        `make plan`, or put the chapter back where it was}%
+    \fi
+  \fi
+  \gdef\btexpectnum{}%
   \par\addvspace{10pt}%
   % Head
   \noindent\textcolor{btink}{\rule{\linewidth}{1.2pt}}\par\nobreak\vspace{3pt}%
   \noindent
-  {\large\bfseries ZESTAW \thezestaw}\label{btsethead\thezestaw}\quad{\large #1}%
-  \hfill \DifficultyStars{#2}\quad
+  {\large\bfseries ZESTAW \thezestaw}\label{btsethead\thezestaw}\quad{\large #2}%
+  \hfill \DifficultyStars{#3}\quad
   \tikz[baseline=(b.base)]{\node[fill=black!8, rounded corners=3pt,
     inner xsep=5pt, inner ysep=2.5pt, outer sep=0pt,
-    font=\small\bfseries] (b) {\faClock[regular]\ cel: #3};}%
+    font=\small\bfseries] (b) {\faClock[regular]\ cel: #4};}%
   \par\nobreak\vspace{2pt}%
   \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\nobreak\vspace{7pt}%
-  \addcontentsline{toc}{section}{Zestaw \thezestaw\ --- #1}%
-  \btsetcolwidth{#4}%
+  \addcontentsline{toc}{section}{Zestaw \thezestaw\ --- #2}%
+  % The row count is read at \end, where the argument is long gone, so it is
+  % stashed here. \gdef because the environment's two halves are a group apart.
+  \gdef\btsetrows{#1}%
+  \btsetcolwidth{#5}%
   \nobreak
   \noindent\begin{minipage}[t]{\btcolwidth}%
 }{%
   \end{minipage}%
   \par\nobreak
-  \btsetfoot
+  \btsetfoot{\btsetrows}%
   \btwholecheck
 }
 
@@ -338,3 +413,27 @@
 \makeatletter
 \renewcommand{\chaptermark}[1]{\markboth{#1}{#1}}
 \makeatother
+
+% ------------------------------------------------------------
+%  The plan
+% ------------------------------------------------------------
+% A week's heading, then its table. \nobreak before every \vspace for the
+% reason the set's head gives at length: glue straight after a line box is a
+% legal breakpoint, and the page-breaker takes it -- here that would leave a
+% week's heading at the foot of one page and its seven days on the next.
+\newcommand{\btline}[1]{\rule[-0.4ex]{#1}{0.4pt}}
+
+\newcommand{\btweek}[2]{%
+  \par\addvspace{11pt}%
+  \noindent{\bfseries\color{btink}Tydzień #1}\quad
+  {\small\color{btgrey}#2}%
+  \par\nobreak\vspace{2pt}%
+  \noindent\textcolor{btrule}{\rule{\linewidth}{0.5pt}}\par\nobreak\vspace{4pt}%
+  \nobreak
+}
+
+\newcommand{\btplanhead}{%
+  {\footnotesize\bfseries Dzień} & {\footnotesize\bfseries Zestaw dnia}
+  & {\footnotesize\bfseries Cel} & {\footnotesize\bfseries Powt.}
+  & {\footnotesize\bfseries Data} & {\footnotesize\bfseries Czas}
+  & {\footnotesize\bfseries Poprawne} \\[3pt]}

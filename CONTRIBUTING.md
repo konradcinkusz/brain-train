@@ -56,8 +56,12 @@ zostawiać osiemdziesiąt liczb, z których każda przestała być prawdziwa.
 
 **Rodzina nie jest ozdobą.** `tools/gen_plan.py` układa z niej plan tak, żeby
 dwa zestawy tej samej rodziny nie wypadły dzień po dniu — trening z
-przeplotem trzyma się dłużej niż blokowy. Zestaw bez sensownej rodziny
-zepsuje plan, nie generator.
+przeplotem trzyma się dłużej niż blokowy. **Rodzina to jest to, co czytelnik
+ćwiczy**: dwa zestawy dzielą ją tylko wtedy, gdy zrobienie jednego zamiast
+drugiego to ta sama praca. Dlatego „procent od drugiej strony" ma własną
+rodzinę, a nie siedzi w `procenty` — plan wybiera zestawy tak, żeby każda
+rodzina weszła, zanim któraś dostanie drugi zestaw, więc źle nadana rodzina
+niczego nie psuje, tylko po cichu wyrzuca umiejętność z planu.
 
 `distinct(N, ...)` losuje aż uzbiera `N` **różnych** zadań — przy czterdziestu
 losowaniach powtórki są prawie pewne, a powtórka w zestawie wygląda jak błąd
@@ -97,7 +101,10 @@ def _suma_cyfr(m):
     return Fraction(sum(int(c) for c in m[1].replace("\\,", "")))
 ```
 
-Potem `make sets && make book`.
+Potem `make sets && make book`. **`make sets` regeneruje też plan** — plan
+wskazuje zestawy po numerach, więc dołożenie zestawu przesuwa wszystko po nim.
+Gdybyś o tym zapomniał, build i tak się przerwie: listy `\input` niosą numer,
+pod którym zestaw ma wypaść.
 
 ## Nowe zadanie pisane ręcznie
 
@@ -123,8 +130,15 @@ końcu sama — nie ma osobnej listy do zaktualizowania.
 \end{zestaw}
 ```
 
-Argumenty: tytuł, gwiazdki, cel czasowy, liczba kolumn. Potem dopisz
-`\input{sets/nazwa}` w `book/structure.tex`.
+Argumenty: tytuł, gwiazdki, cel czasowy, liczba kolumn — plus opcjonalny
+pierwszy argument w nawiasie kwadratowym: liczba wierszy na pomiar, domyślnie
+jeden (`\begin{zestaw}[5]{...}` mają tylko zestawy kontrolne).
+
+Potem dopisz go do listy `HAND` w `tools/gen_sets.py` i uruchom `make sets`.
+**Nie dopisuj `\input` wprost do `structure.tex`** — zestaw wstawiony z
+pominięciem generowanej listy nie dostanie numeru, którego oczekuje plan, i
+build się przerwie. To jest celowe: plan i książka muszą się zgadzać co do
+numeracji, a jedna lista jest jedynym sposobem, żeby nie mogły się rozjechać.
 
 **`\btnc` mówi, gdzie kończy się kolumna** — przy `n` kolumnach potrzeba
 `n-1` takich znaczników, rozłożonych równo. Zestaw jest jednym nierozrywalnym
@@ -166,6 +180,9 @@ make book      # build + bramki
 - **`errors`, `unresolved refs`, `overfull hbox/vbox`** — zerowe. Przepełnione
   pudełko znaczy, że coś wystaje poza kolumnę; najczęściej zadanie za szerokie
   na `\z` i powinno być `\zz`.
+- **`Zestaw N expected number M`** — kolejność w książce rozjechała się
+  z generatorem. `make sets` naprawia; jeśli nie, przestawiłeś rozdział
+  w `structure.tex`.
 - **`STALE`** — zapomniałeś `make sets` (albo zostawiłeś w
   `book/sets/generated/` plik, którego generator już nie tworzy).
 - **`nierozpoznanych`** — dodałeś buildera i nie nauczyłeś jego kształtu

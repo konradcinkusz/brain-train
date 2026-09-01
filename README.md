@@ -15,8 +15,8 @@ Zeszyt ćwiczeń na czas: arytmetyka, kolejność działań, procenty, ułamki,
 potęgi, ciągi, zagadki logiczne i triki rachunkowe. **Nie liczy się pojedynczy
 wynik — liczy się ile zadań zrobisz i jak szybko.**
 
-**3304 zadania · 85 zestawów · 66 stron A4.** Materiał na trzy miesiące
-codziennego treningu, ułożony w trzy bloki rosnącej trudności.
+**3424 zadania · 88 zestawów · 76 stron A4** — i gotowy **plan na 13 tygodni**,
+dzień po dniu.
 
 ## Quick start
 
@@ -56,6 +56,44 @@ Rubryka na datę jest tam celowo: jeden pomiar nie mówi nic. Wracasz do tego
 samego zestawu za tydzień i porównujesz — ten sam zestaw, krótszy czas, mniej
 pomyłek.
 
+## Plan na 13 tygodni
+
+91 dni, jeden zestaw dziennie, kwadrans. Książki można używać bez planu — po
+kolei — ale plan zdejmuje z Ciebie codzienną decyzję, co robić, i układa
+kolejność tak, żeby nie była przypadkowa:
+
+- **Rosnące obciążenie** — cztery tygodnie Bloku I, pięć Bloku II, cztery
+  Bloku III.
+- **Przeplot** — dwa dni pod rząd nigdy nie ćwiczą tej samej rodziny zadań.
+  Sześć zestawów dodawania w sześć dni idzie *szybciej*, gdy się je robi,
+  i zostaje w głowie gorzej.
+- **Odstęp** — każdy dzień po pierwszym tygodniu powtarza zestaw sprzed
+  siedmiu dni, przeciwko czasowi już zapisanemu pod spodem. To jest ten pomiar,
+  dla którego ta książka istnieje.
+- **Co siódmy dzień pomiar kontrolny** — ten sam zestaw co tydzień, z pięcioma
+  wierszami na wynik, więc cztery pomiary widać obok siebie, a nie w czterech
+  miejscach książki.
+
+```
+Tydzień 2   Blok I — Fundament
+──────────────────────────────────────────────────────────────────────────
+ Dzień  Zestaw dnia                    Cel   Powt.  Data     Czas   Poprawne
+     8  4 · Dzielenie w tabliczce     3:20      1   ______  ______  ____/40
+     9  11 · Jednostki                3:20      3   ______  ______  ____/40
+    10  8 · Tabliczka mnożenia II     2:40      7   ______  ______  ____/40
+   ...
+    14  86 · Pomiar kontrolny I       3:40      —   ______  ______  ____/40
+```
+
+Plan jest **generowany** z listy zestawów, nie pisany ręcznie: 91 wierszy
+wpisanych z palca to 91 okazji, żeby wskazać zestaw, który się przesunął.
+A żeby numer w planie nie mógł się rozjechać z numerem w książce, każdy zestaw
+jest wstawiany z oczekiwanym numerem i **przerywa build**, jeśli wypadnie pod
+innym.
+
+Trzy zasady wyżej są wnioskami z badań nad ćwiczeniem, a nie pomiarem tej
+książki — nikt jeszcze nie przerobił tego planu, i książka mówi to wprost.
+
 ## Trzy bloki, rosnąca trudność
 
 Każdy blok to osobny rozdział. Kolejność w książce jest drabiną: zaczynasz od
@@ -80,7 +118,8 @@ dlatego, że ktoś go zgadł.
 │   ├── main-pl-a4.tex                # Plik główny — cienki, format jest w preambule
 │   ├── preamble.tex                  # Zestaw, \z, magazyn odpowiedzi
 │   ├── structure.tex                 # JEDNA lista zestawów
-│   ├── frontmatter/                  # Strona tytułowa, „Jak korzystać”
+│   ├── frontmatter/                  # Tytuł, „Jak korzystać”, plan
+│   ├── plan/generated/               # GENEROWANE — tabele 13 tygodni
 │   └── sets/
 │       ├── 20-zagadki.tex            # Pisane ręcznie: zagadki, ciągi,
 │       ├── 21-ciagi.tex              #   wyzwania, triki — tego się nie generuje
@@ -90,6 +129,7 @@ dlatego, że ktoś go zgadł.
 │           └── _blok-{1,2,3}.tex     #   listy \input, jedna na rozdział
 ├── tools/
 │   ├── gen_sets.py                   # Generator zestawów + bramka drift
+│   ├── gen_plan.py                   # Generator planu 13 tygodni
 │   ├── checkanswers.py               # Przelicza odpowiedzi drugą ścieżką
 │   └── checklog.py                   # Bramka logu (nie kod wyjścia!)
 ├── deck-archive/                     # Poprzednie wersje — nie budowane
@@ -108,13 +148,14 @@ dlatego, że ktoś go zgadł.
 | Cel | Co robi |
 |---|---|
 | `make book` | Buduje książkę i uruchamia wszystkie bramki |
-| `make sets` | Regeneruje zestawy rachunkowe |
+| `make sets` | Regeneruje zestawy rachunkowe i plan |
+| `make plan` | Regeneruje sam plan |
 | `make drift` | Sprawdza, czy wygenerowane zestawy są aktualne |
 | `make answers` | Przelicza każdą odpowiedź z wydrukowanego pytania |
 | `make check` | Same bramki, bez budowania |
 | `make clean` | Usuwa artefakty |
 
-Cztery bramki, każda sprawdza coś, czego pozostałe nie widzą:
+Bramki, każda sprawdza coś, czego pozostałe nie widzą:
 
 - **`tools/checklog.py`** — błędy, nierozwiązane referencje, przepełnione pudełka
   i brak zbieżności. To jest bramka, **nie kod wyjścia `latexmk`**: przy
@@ -135,7 +176,15 @@ Cztery bramki, każda sprawdza coś, czego pozostałe nie widzą:
   jest błędem, nie pominięciem** — inaczej przestałaby mierzyć w dniu, w którym
   ktoś doda buildera.
 
-Czwarta bramka siedzi w preambule, nie w `tools/`: każdy zestaw ma etykietę
+- **`tools/gen_plan.py --check`** — plan wskazuje zestawy po numerach, więc
+  zmiana listy zestawów bez regeneracji planu wysyła czytelnika pod zły numer,
+  a plik nadal jest poprawnym LaTeX-em.
+
+Dwie bramki siedzą w preambule, nie w `tools/`, bo obie potrzebują liczb, które
+istnieją dopiero w trakcie składania. Pierwsza: listy `\input` niosą numer,
+pod którym zestaw ma wypaść, a zestaw, który wypadnie pod innym (albo bez
+żadnego), **przerywa build** — inaczej przestawienie rozdziału przesunęłoby
+cały plan o jeden zestaw, po cichu. Druga: każdy zestaw ma etykietę
 w nagłówku i w stopce, a build **przerywa się błędem**, jeśli obie wypadną na
 różnych stronach. Zestaw rozbity między strony to rubryka z czasem po drugiej
 stronie kartki niż zadania, które ocenia — a ta rubryka jest w tej książce
