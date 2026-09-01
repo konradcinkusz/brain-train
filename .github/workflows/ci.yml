@@ -26,6 +26,21 @@
 #
 #  THE ASSET NAME is year-agnostic on purpose. If issue #8 settles on annual
 #  editions, the year lands in ASSET below and nowhere else.
+#
+#  4. IT CAN BE RUN BY HAND, and that is not a convenience. Pushing a tag from
+#     a Claude Code web session returns HTTP 403 -- the session's git
+#     credentials carry branch access and not tag access -- so a session could
+#     prepare a release end to end and could not cut one, and CLAUDE.md carried
+#     that as a standing limitation with a manual command beside it. The
+#     workflow's own GITHUB_TOKEN has `contents: write`, and
+#     softprops/action-gh-release creates the tag it is given. So the release
+#     is now cuttable from anywhere, by anybody who can run a workflow, with
+#     the same three gates in front of it.
+#
+#     The version is a REQUIRED input rather than something derived. A release
+#     is the one thing here that cannot be taken back, and a workflow that
+#     guesses its own version number is a workflow that publishes on a
+#     misclick.
 # ============================================================
 name: Release book PDF
 
@@ -34,6 +49,12 @@ on:
     tags:
       - 'v*'
       - 'V*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Wersja do wydania, np. v2.0.0'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -97,7 +118,12 @@ jobs:
       - name: The asset exists
         run: test -s "$ASSET"
 
+      # tag_name is explicit because it has to serve both triggers: on a tag
+      # push github.ref_name IS the tag, but on a manual run it is the branch
+      # the workflow was dispatched from, and a release tagged `main` is not a
+      # release anybody can go back to.
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.version || github.ref_name }}
           files: ${{ env.ASSET }}
           fail_on_unmatched_files: true
