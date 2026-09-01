@@ -80,9 +80,16 @@ jest w porządku: mówi o dłoni, nie o kartce.
 z escape'ami TeX-a (`Mno\. zenie`). Oba dają ten sam znak; ujednolicanie jednego
 w drugi to cicha zmiana w kilkudziesięciu zadaniach, o którą nikt nie prosił.
 
-**Komentarz `% -- NN --`** to globalny numer zadania. Dodając zadanie na końcu
-obszaru, nadaj mu kolejny wolny numer; wstawiając w środku, przenumeruj resztę
-pliku.
+**Komentarz `% -- NN --`** numeruje zadania **w obrębie obszaru**, od 1, i tak
+samo numeruje je książka: w rozdziale ramka *N* to zadanie *N*. Komentarz jest
+tylko komentarzem — nic z niego nie trafia na stronę — ale ma się zgadzać z tym,
+co widzi czytelnik na marginesie.
+
+Wstawiając zadanie w środku pliku, przenumeruj resztę **tego jednego pliku**.
+Numeracja jest lokalna, więc dodanie zadania do obszaru 5 nie dotyka obszarów
+1--4. Wcześniej numery były globalne (1--38) i każde wstawienie w środku
+wymagało przenumerowania wszystkiego — a do tego numer w komentarzu nie zgadzał
+się z numerem na marginesie.
 
 ## Kolory obszarów
 
