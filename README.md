@@ -1,32 +1,45 @@
 # BrainTrain 2025
 
-![CI](https://github.com/konradcinkusz/BrainTrain/actions/workflows/ci.yml/badge.svg)
-![PDF](https://img.shields.io/github/v/release/konradcinkusz/BrainTrain?label=PDF)
+[![Build book](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml/badge.svg)](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml "Build book")
+[![Licencja](https://flat.badgen.net/github/license/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/blob/main/LICENSE "Licencja")
+[![Zgłoszenia](https://flat.badgen.net/github/issues/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/issues "Zgłoszenia")
 
 Zbiór krótkich zadań wzmacniających obie półkule mózgu — arytmetyka na czas, kolejność działań, zagadki logiczne, ciągi liczbowe i wyzwania mieszane. Format inspirowany książkami z serii *Trening Mózgu*: jedno zadanie, stoper, porównaj z podanym limitem czasu. Bez kalkulatora!
 
 ## Quick start
 
 ```bash
-git clone https://github.com/konradcinkusz/BrainTrain.git
-cd BrainTrain
-latexmk -xelatex main.tex
+git clone https://github.com/konradcinkusz/brain-train.git
+cd brain-train
+make book
 ```
 
 ## Struktura repozytorium
 
 ```
 .
-├── main.tex                           # Główny plik LaTeX
-├── mybraintrainer.cls                 # Klasa Beamer (kolory, stopka, fontawesome)
-├── mybraintrainer.sty                 # Makra: \ExerciseSlide, \AnswerSlide
-├── areas/
+├── areas/                             # ŹRÓDŁO zadań (38 w pięciu obszarach)
 │   ├── 1-arytmetyka-podstawy.tex     # Dodawanie, odejmowanie, mnożenie, dzielenie
 │   ├── 2-kolejnosc-dzialan.tex       # Nawiasy, priorytety, potęgi
 │   ├── 3-zagadki-logiczne.tex        # Sylogizmy, pułapki słowne, dedukcja
 │   ├── 4-ciagi-i-wzorce.tex          # Ciągi liczbowe i literowe
 │   └── 5-mieszane-wyzwania.tex       # Prędkość, procenty, finanse, praca
-├── .github/workflows/ci.yml           # Build & Release PDF on version tag
+├── book/                              # KSIĄŻKA A4 (układ Stroudowski)
+│   ├── main-pl-a4.tex                # Plik główny — cienki, format jest w preambule
+│   ├── preamble.tex                  # Ramki, odpowiedzi, numery na marginesie
+│   ├── structure.tex                 # JEDNA lista rozdziałów
+│   ├── frontmatter/                  # Strona tytułowa, „Jak korzystać”
+│   └── chapters/                     # GENEROWANE z areas/ (make convert)
+├── tools/
+│   ├── convert_deck.py               # areas/ → book/chapters/
+│   ├── checklog.py                   # Bramka logu (nie kod wyjścia!)
+│   └── checkbadges.py                # Numery ramek na właściwym marginesie
+├── main.tex                           # Prezentacja Beamer (patrz #16, #21)
+├── mybraintrainer.cls / .sty          # Klasa i makra prezentacji
+├── .github/workflows/
+│   ├── build.yml                     # Build książki na każdy push i PR
+│   └── ci.yml                        # Build + wydanie PDF na tag v*/V*
+├── Makefile
 ├── LICENSE
 └── README.md
 ```
@@ -64,12 +77,18 @@ sprawdza, czy nie rozjechały się z sobą. Całość opisuje
 
 ## Wydanie PDF
 
-Wypchnij tag `v*`, aby wyzwolić GitHub Actions i opublikować PDF w GitHub Releases:
+Wypchnij tag `v*` lub `V*`, aby zbudować książkę i dołączyć PDF
+(`trening-mozgu-a4.pdf`) do wydania:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v2.0.0
+git push origin v2.0.0
 ```
+
+Wydanie powstaje tylko wtedy, gdy build przejdzie wszystkie bramki — inaczej
+job wydania w ogóle się nie uruchamia. To celowe: wydanie `v1.0.0` nie ma
+załączonego PDF-a, bo jego build się nie powiódł, a nikt tego nie zauważył
+([#21](https://github.com/konradcinkusz/brain-train/issues/21)).
 
 ## Wkład
 

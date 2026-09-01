@@ -1,0 +1,75 @@
+# ============================================================
+#  Build the book on every push and pull request.
+#
+#  WHY THIS EXISTS. Until now the only workflow triggered on a `v*` tag, so a
+#  broken .tex reached a reader before anything compiled it. That is not
+#  hypothetical here: the v1.0.0 build failed and the release shipped with no
+#  PDF attached at all (issue #21), and nobody found out for six weeks because
+#  nothing ever built on a merge.
+#
+#  THE GATE IS NOT THE EXIT CODE. Under -interaction=nonstopmode a failed run
+#  still writes a PDF, and with -file-line-error an error line begins with a
+#  path rather than "!", so `grep '^!'` misses it too. tools/checklog.py reads
+#  the log properly and is what decides.
+#
+#  permissions is contents: read. This workflow publishes nothing; the one that
+#  does raises its own permission in the one job that needs it.
+# ============================================================
+name: Build book
+
+# push is restricted to main. A branch pushed as part of a pull request is
+# already covered by `pull_request`, and triggering on both runs every PR
+# commit twice for the same answer.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  book:
+    runs-on: ubuntu-latest
+    # Generous against a measured cost of well under a minute. A job with no
+    # timeout that hangs reports nothing for six hours and is indistinguishable
+    # from a slow queue; with one, it is a failure somebody can read.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # book/chapters/ is generated from areas/. Checked BEFORE the build, so a
+      # deck edit that was never converted fails as what it is rather than as a
+      # confusing diff in a PDF nobody compares.
+      - name: Chapters match the deck sources
+        run: python3 tools/convert_deck.py --check
+
+      - name: Build the book
+        # Step level, not an action input: latexmk's exit code is not the gate.
+        # Keep going far enough to produce a log, then let checklog.py decide.
+        continue-on-error: true
+        uses: xu-cheng/latex-action@v4
+        with:
+          working_directory: book
+          root_file: main-pl-a4.tex
+          latexmk_use_xelatex: false
+
+      # checkbadges.py reads the finished PDF through pdftotext.
+      - name: Install poppler
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+
+      - name: Read the log properly
+        run: python3 tools/checklog.py book/main-pl-a4.log
+
+      - name: Frame badges are in the outer margin
+        run: python3 tools/checkbadges.py book/main-pl-a4.pdf
+
+      # So a reviewer can read the actual pages from a PR without a local TeX.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: book-pl-a4
+          path: |
+            book/main-pl-a4.pdf
+            book/main-pl-a4.log
+          if-no-files-found: warn
