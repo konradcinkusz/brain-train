@@ -1,0 +1,49 @@
+% ======================================================
+%  Rozdział 1 — Arytmetyka: Podstawy
+%
+%  SAMPLE. Three exercises, ported by hand from areas/1-arytmetyka-podstawy.tex
+%  to prove the frame machinery on real content. The remaining seven, and the
+%  other four areas, are converted in issue #17 -- script-assisted, because the
+%  deck macros are regular enough to convert mechanically and re-run while the
+%  frame design settles.
+%
+%  THE PATTERN. One exercise per frame. The answer to an exercise opens the
+%  frame AFTER it, so the reader covers the page below the hairline, works the
+%  exercise against the stopwatch, then reads on to check. Every exercise
+%  therefore appears exactly once and every answer exactly once, and the last
+%  frame of a chapter carries only the final answer.
+%
+%  Diacritics are written as UTF-8 here, not as the deck's \. z escapes. Both
+%  reach the same glyph under inputenc; the conversion script must preserve
+%  whichever form it finds rather than normalising one into the other.
+% ======================================================
+
+\chapter{Arytmetyka: Podstawy}
+
+Dodawanie, odejmowanie, mnożenie i dzielenie — na czas i bez kalkulatora.
+Zakryj dłonią stronę poniżej kreski, uruchom stoper, rozwiąż zadanie, a
+dopiero potem czytaj dalej.
+
+% -- 1 --
+\begin{fr}
+  \exercise[\CategoryBadge[ArithColor!20]{Dodawanie}]{1}{30 s}{$47 + 38 = ?$}
+\end{fr}
+
+% -- 2 --
+\begin{fr}
+  \ans{85}{}
+  \exercise[\CategoryBadge[ArithColor!20]{Odejmowanie}]{1}{30 s}{$156 - 79 = ?$}
+\end{fr}
+
+% -- 3 --
+\begin{fr}
+  \ans{77}{}
+  \exercise[\CategoryBadge[ArithColor!20]{Mnożenie}]{1}{45 s}{$24 \times 7 = ?$}
+\end{fr}
+
+% The chapter's last frame carries the last answer and nothing else. A hint is
+% shown here to exercise the second argument of \ans on a real page; most
+% exercises in this area need none.
+\begin{fr}
+  \ans{168}{$24 \times 7 = 20 \times 7 + 4 \times 7$}
+\end{fr}
