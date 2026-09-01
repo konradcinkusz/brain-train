@@ -321,6 +321,52 @@
 }
 
 % ------------------------------------------------------------
+%  The chapter's frame range, carried through the .aux
+% ------------------------------------------------------------
+% A chapter opener says "Ramki 1-11", which is the reader's answer to "how much
+% is this chapter". The total is only known once the chapter has been typeset,
+% so it is written to the .aux at the end of the chapter and read back on the
+% NEXT run: a two-pass value.
+%
+% It is written when the FOLLOWING chapter starts (and at \end{document} for
+% the last one), because there is no end-of-chapter hook. At that moment the
+% frame counter still holds the chapter that is closing -- \newcounter's parent
+% reset has not fired yet, since \chapter has not stepped the chapter counter.
+%
+% A chapter with no recorded total prints NOTHING and reserves nothing. It must
+% never print "??": on a first run every opener would carry the marker, which
+% teaches a reader to ignore it, and the marker would then be invisible on the
+% one run where it meant something. An absent range is a run that has not
+% converged, and checklog.py fails the build on the rerun warning that says so.
+\makeatletter
+\newcommand{\bt@openchap}{}
+\newcommand{\btframetotal}[2]{\global\@namedef{bt@total@#1}{#2}}
+% \ifdefempty, NOT \ifx\bt@openchap\@empty. \newcommand declares a \long macro
+% and \@empty is not one, so \ifx compares unequal even when both bodies are
+% empty -- which wrote a stray \btframetotal{}{0} into the .aux on the first
+% \chapter* of the run. Harmless, because nothing reads an empty key, and
+% exactly the kind of harmless noise that costs somebody an hour later.
+\newcommand{\bt@flushtotal}{%
+  \ifdefempty{\bt@openchap}{}{%
+    \immediate\write\@auxout{%
+      \string\btframetotal{\bt@openchap}{\the\value{frameno}}}%
+  }%
+}
+\pretocmd{\chapter}{\bt@flushtotal}{}{%
+  \PackageWarning{braintrain}{could not hook \string\chapter\space for frame totals}}
+\AtEndDocument{\bt@flushtotal}
+
+% "Ramki 1--N", or nothing at all if this run does not know N yet.
+\newcommand{\bt@framerange}{%
+  \@ifundefined{bt@total@\thechapter}{}{%
+    \vspace{4pt}%
+    {\small\color{btgrey}Ramki 1--\@nameuse{bt@total@\thechapter}}%
+    \par
+  }%
+}
+\makeatother
+
+% ------------------------------------------------------------
 %  Chapter openers and running heads
 % ------------------------------------------------------------
 % A chapter opens between two rules -- a hairline over the area label, a heavy
@@ -335,7 +381,10 @@
    {\small\bfseries\color{btgrey}\MakeUppercase{\chaptername\ \thechapter}}%
    \par\vspace{4pt}%
    {\Huge\bfseries #1}%
-   \par\vspace{8pt}%
+   \par
+   \gdef\bt@openchap{\thechapter}%
+   \bt@framerange
+   \vspace{8pt}%
    \textcolor{btink}{\hrule height 1.6pt}%
    \vspace{28pt}%
   }%
@@ -343,9 +392,13 @@
 % Unnumbered chapters (the front matter) get the same treatment without the
 % area label, so "Jak korzystać z tej książki" is visibly the same kind of
 % object as an area.
+%
+% \bt@openchap is cleared here: a \chapter* records no total, and leaving the
+% previous chapter's key set would attribute this one's frame count to it.
 \renewcommand{\@makeschapterhead}[1]{%
   \vspace*{10pt}%
   {\parindent\z@\raggedright\normalfont
+   \gdef\bt@openchap{}%
    \textcolor{btrule}{\hrule height 0.6pt}%
    \vspace{10pt}%
    {\Huge\bfseries #1}%
