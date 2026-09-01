@@ -16,7 +16,7 @@ ciągi liczbowe i wyzwania mieszane. Format inspirowany serią *Trening Mózgu*
 i programowanym układem Strouda: jedno zadanie na **ramkę**, stoper, porównanie
 z limitem. Bez kalkulatora.
 
-**38 zadań · 5 obszarów · 20 stron A4.**
+**44 zadania · 5 obszarów · 23 strony A4.**
 
 ## Quick start
 
@@ -66,7 +66,7 @@ odpowiedź, bo czytelnik jej nie widzi, dopóki nie przewinie. Strona nie może.
 
 ```
 .
-├── areas/                             # ŹRÓDŁO zadań (38 w pięciu obszarach)
+├── areas/                             # ŹRÓDŁO zadań (44 w pięciu obszarach)
 │   ├── 1-arytmetyka-podstawy.tex     # Dodawanie, odejmowanie, mnożenie, dzielenie
 │   ├── 2-kolejnosc-dzialan.tex       # Nawiasy, priorytety, potęgi
 │   ├── 3-zagadki-logiczne.tex        # Sylogizmy, pułapki słowne, dedukcja

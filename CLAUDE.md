@@ -8,13 +8,14 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 
 | | Done | Remaining |
 |---|---|---|
-| Book (A4, Stroud) | Frame machinery, all 38 exercises, front matter, TOC, chapter frame ranges | A sixth area (#13); difficulty balance (#10, #11) |
+| Book (A4, Stroud) | Frame machinery, all 44 exercises, front matter, TOC, chapter frame ranges, difficulty ladder | A sixth area (#13) |
 | Build | `make book`, three gates, CI on every push and PR, tag-driven release | — |
 | Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
 | Docs | README, `CONTRIBUTING.md`, this file | — |
 
-The book is **20 pages, 43 frames, zero errors, zero unresolved references,
-zero overfull boxes**, with all 43 margin badges in the correct outer margin.
+The book is **23 pages, 49 frames, zero errors, zero unresolved references,
+zero overfull boxes**, with all 49 margin badges in the correct outer margin.
+Every area carries at least two one-star exercises and at least eight in total.
 
 **Re-measure those numbers from the build in front of you.** Page counts and
 the overfull multiset are functions of the layout constants and do not survive
