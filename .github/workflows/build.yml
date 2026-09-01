@@ -38,11 +38,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # book/chapters/ is generated from areas/. Checked BEFORE the build, so a
-      # deck edit that was never converted fails as what it is rather than as a
-      # confusing diff in a PDF nobody compares.
-      - name: Chapters match the deck sources
-        run: python3 tools/convert_deck.py --check
+      # The arithmetic sets are generated. Checked BEFORE the build, so a
+      # generator edit that was never regenerated fails as what it is rather
+      # than as a confusing diff in a PDF nobody compares. It also guards the
+      # include list: a set added to the generator and missing from that list
+      # is a set nobody ever sees, with every other check green.
+      - name: Generated sets are up to date
+        run: python3 tools/gen_sets.py --check
 
       - name: Build the book
         # Step level, not an action input: latexmk's exit code is not the gate.
@@ -54,15 +56,8 @@ jobs:
           root_file: main-pl-a4.tex
           latexmk_use_xelatex: false
 
-      # checkbadges.py reads the finished PDF through pdftotext.
-      - name: Install poppler
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
-
       - name: Read the log properly
         run: python3 tools/checklog.py book/main-pl-a4.log
-
-      - name: Frame badges are in the outer margin
-        run: python3 tools/checkbadges.py book/main-pl-a4.pdf
 
       # So a reviewer can read the actual pages from a PR without a local TeX.
       - uses: actions/upload-artifact@v4

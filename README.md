@@ -11,12 +11,11 @@
 [![Pull requesty](https://flat.badgen.net/github/prs/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/pulls "Pull requesty")
 [![Build book](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml/badge.svg)](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml "Build book")
 
-Zbiór krótkich zadań na czas — arytmetyka, kolejność działań, zagadki logiczne,
-ciągi liczbowe, wyzwania mieszane i szybkie triki rachunkowe. Format inspirowany serią *Trening Mózgu*
-i programowanym układem Strouda: jedno zadanie na **ramkę**, stoper, porównanie
-z limitem. Bez kalkulatora.
+Zeszyt ćwiczeń na czas: arytmetyka, kolejność działań, procenty, ciągi,
+zagadki logiczne i triki rachunkowe. **Nie liczy się pojedynczy wynik — liczy
+się ile zadań zrobisz i jak szybko.**
 
-**52 zadania · 6 obszarów · 26 stron A4.**
+**434 zadania · 18 zestawów · 16 stron A4.**
 
 ## Quick start
 
@@ -31,64 +30,61 @@ Potrzebujesz `pdflatex`, `latexmk` i `python3`. Gotowy PDF powstaje jako
 
 ## Jak działa format
 
-Każde zadanie zajmuje jedną **ramkę** — kawałek strony między dwiema cienkimi
-kreskami, z numerem na zewnętrznym marginesie. Odpowiedź nie stoi pod zadaniem:
-otwiera ramkę **następną**.
+Zadania są zebrane w **zestawy** — po 24--30 na stronie, jedno pod drugim.
+Zestaw robisz w całości, na stoper, i notujesz czas oraz wynik pod spodem.
+**Wszystkie odpowiedzi są na końcu książki**, nigdy obok zadania.
 
 ```
-──────────────────────────────────────────────────────  ①
-★☆☆                              [Dodawanie]  [⏱ 30 s]
-                    47 + 38 = ?
-──────────────────────────────────────────────────────  ②
-           ┌────────────────────────────┐
-           │             85             │
-           └────────────────────────────┘
-★☆☆                             [Odejmowanie]  [⏱ 30 s]
-                   156 − 79 = ?
+ZESTAW 1   Dodawanie dwucyfrowe              ★☆☆   ⏱ cel: 2:30
+─────────────────────────────────────────────────────────────────
+  1. 18 + 36  ____     11. 75 + 89  ____     21. 55 + 32  ____
+  2. 22 + 82  ____     12. 30 + 13  ____     22. 62 + 15  ____
+  3. 59 + 31  ____     13. 83 + 23  ____     23. 30 + 23  ____
+  ...                  ...                   ...
+ 10. 89 + 35  ____     20. 22 + 50  ____     30. 15 + 18  ____
+─────────────────────────────────────────────────────────────────
+Czas: ________   Poprawne: ____ / 30   Data: ________
 ```
 
-Zakrywasz dłonią stronę poniżej kreski, uruchamiasz stoper, liczysz w pamięci,
-a dopiero potem czytasz dalej. To jedyna reguła tego formatu — i powód, dla
-którego książka nie jest prezentacją przelaną na papier: slajd może schować
-odpowiedź, bo czytelnik jej nie widzi, dopóki nie przewinie. Strona nie może.
-
-<p align="right">(<a href="#readme-top">wróć na górę</a>)</p>
+Rubryka na datę jest tam celowo: jeden pomiar nie mówi nic. Wracasz do tego
+samego zestawu za tydzień i porównujesz — ten sam zestaw, krótszy czas, mniej
+pomyłek.
 
 ## Poziomy trudności
 
-| Gwiazdki | Poziom | Czas docelowy |
-|----------|--------|---------------|
-| ★ | Łatwy | do 1 min |
-| ★★ | Średni | 1–3 min |
-| ★★★ | Trudny | 3–5 min |
+Gwiazdki opisują **zestaw**, nie pojedyncze zadanie:
+
+| Gwiazdki | Zestaw |
+|----------|--------|
+| ★ | rozgrzewka |
+| ★★ | normalne tempo |
+| ★★★ | trudniejsze — tu czas rośnie |
 
 ## Struktura repozytorium
 
 ```
 .
-├── areas/                             # ŹRÓDŁO zadań (52 w sześciu obszarach)
-│   ├── 1-arytmetyka-podstawy.tex     # Dodawanie, odejmowanie, mnożenie, dzielenie
-│   ├── 2-kolejnosc-dzialan.tex       # Nawiasy, priorytety, potęgi
-│   ├── 3-zagadki-logiczne.tex        # Sylogizmy, pułapki słowne, dedukcja
-│   ├── 4-ciagi-i-wzorce.tex          # Ciągi liczbowe i literowe
-│   ├── 5-mieszane-wyzwania.tex       # Prędkość, procenty, finanse, praca
-│   └── 6-szybkie-triki.tex           # Skróty rachunkowe: ×11, kwadraty, procenty
-├── book/                              # KSIĄŻKA A4 (układ Stroudowski)
+├── book/
 │   ├── main-pl-a4.tex                # Plik główny — cienki, format jest w preambule
-│   ├── preamble.tex                  # Ramki, odpowiedzi, numery na marginesie
-│   ├── structure.tex                 # JEDNA lista rozdziałów
+│   ├── preamble.tex                  # Zestaw, \z, magazyn odpowiedzi
+│   ├── structure.tex                 # JEDNA lista zestawów
 │   ├── frontmatter/                  # Strona tytułowa, „Jak korzystać”
-│   └── chapters/                     # GENEROWANE z areas/ (make convert)
+│   └── sets/
+│       ├── 20-zagadki.tex            # Pisane ręcznie: zagadki, ciągi,
+│       ├── 21-ciagi.tex              #   wyzwania, triki — tego się nie generuje
+│       ├── 22-mieszane.tex
+│       ├── 23-triki.tex
+│       └── generated/                # GENEROWANE (make sets) — 14 zestawów rachunków
 ├── tools/
-│   ├── convert_deck.py               # areas/ → book/chapters/
-│   ├── checklog.py                   # Bramka logu (nie kod wyjścia!)
-│   └── checkbadges.py                # Numery ramek na właściwym marginesie
-├── deck-archive/                      # Prezentacja Beamer — zarchiwizowana, nie budowana
+│   ├── gen_sets.py                   # Generator zestawów + bramka drift
+│   └── checklog.py                   # Bramka logu (nie kod wyjścia!)
+├── deck-archive/                     # Poprzednie wersje — nie budowane
 ├── .github/workflows/
-│   ├── build.yml                     # Build książki na każdy push i PR
+│   ├── build.yml                     # Build na każdy push i PR
 │   └── ci.yml                        # Build + wydanie PDF na tag v*/V*
 ├── Makefile
-├── CLAUDE.md                          # Decyzje układu i pułapki — czytaj przed zmianami
+├── CLAUDE.md                          # Decyzje i pułapki — czytaj przed zmianami
+├── CONTRIBUTING.md
 ├── LICENSE
 └── README.md
 ```
@@ -98,8 +94,8 @@ odpowiedź, bo czytelnik jej nie widzi, dopóki nie przewinie. Strona nie może.
 | Cel | Co robi |
 |---|---|
 | `make book` | Buduje książkę i uruchamia wszystkie bramki |
-| `make convert` | `areas/` → `book/chapters/` |
-| `make drift` | Sprawdza, czy rozdziały zgadzają się z `areas/` |
+| `make sets` | Regeneruje zestawy rachunkowe |
+| `make drift` | Sprawdza, czy wygenerowane zestawy są aktualne |
 | `make check` | Same bramki, bez budowania |
 | `make clean` | Usuwa artefakty |
 
@@ -109,25 +105,27 @@ Trzy bramki, każda sprawdza coś, czego pozostałe nie widzą:
   i brak zbieżności. To jest bramka, **nie kod wyjścia `latexmk`**: przy
   `nonstopmode` nieudany przebieg i tak zapisuje PDF, a przy `-file-line-error`
   linia błędu zaczyna się od ścieżki, więc `grep '^!'` też jej nie widzi.
-- **`tools/checkbadges.py`** — czyta gotowy PDF i sprawdza, że numer każdej ramki
-  jest na *zewnętrznym* marginesie. Ten defekt nie daje błędu, ostrzeżenia ani
-  przepełnionego pudełka — żaden log go nie zobaczy.
-- **`tools/convert_deck.py --check`** — rozdziały są generowane z `areas/`;
-  zadanie zmienione w źródle i nieprzekonwertowane zostawia w książce starą wersję,
-  a obie wersje plików są poprawne, więc reszta bramek świeci na zielono.
+- **`tools/gen_sets.py --check`** — zestawy rachunkowe są generowane; zmiana
+  generatora bez regeneracji zostawia w książce starą wersję, a oba pliki są
+  poprawne, więc reszta bramek świeci na zielono. Ta sama bramka pilnuje listy
+  `\input`-ów: zestaw dodany do generatora i zapomniany w liście to zestaw,
+  którego nikt nigdy nie zobaczy.
 
-Obie bramki czytające PDF sprawdzono, wprowadzając defekt, którego pilnują —
-sprawdzenie, które nigdy nie zawiodło, może nie mierzyć niczego.
+Generator liczy odpowiedzi tym samym kodem, który układa zadania, więc
+wydrukowana odpowiedź nie może nie zgadzać się ze swoim zadaniem.
 
 <p align="right">(<a href="#readme-top">wróć na górę</a>)</p>
 
-### Dlaczego zadania mieszkają w `areas/`, a nie w `book/chapters/`
+### Dlaczego rachunki są generowane
 
-W `areas/` zadanie stoi obok **swojej własnej** odpowiedzi — tak się o zadaniu
-myśli. W książce odpowiedź otwiera ramkę *następną*, więc leży przy zadaniu
-**kolejnym**. Pisanie wprost w formacie książki znaczyłoby przesuwanie każdej
-odpowiedzi o jedno miejsce ręcznie; `tools/convert_deck.py` robi to za Ciebie i
-`make drift` pilnuje, żeby obie strony się nie rozjechały.
+Bo książkę ocenia się liczbą zadań, a kilkaset ręcznie wpisanych sum to miejsce,
+w którym chowają się pomyłki. Każde zadanie i jego odpowiedź powstają z tych
+samych trzech linijek kodu. Generator jest deterministyczny (stały seed), więc
+książka jest identyczna przy każdym buildzie — inaczej nie dałoby się porównać
+dzisiejszego czasu z zeszłotygodniowym.
+
+Zagadek, ciągów i trików **się nie generuje** — pułapka słowna to żart, a żart
+ma autora. Te siedzą w `book/sets/` i pisze się je ręcznie.
 
 ## Wydanie PDF
 

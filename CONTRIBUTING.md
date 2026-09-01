@@ -5,133 +5,126 @@ formatu i przeszły bramki.
 
 ---
 
-## Gdzie mieszkają zadania
+## Najpierw: co ta książka mierzy
 
-**Edytuj `areas/`, nigdy `book/chapters/`.**
+Nie to, czy pojedyncze zadanie jest ciekawe. **Ile zadań czytelnik zrobi i jak
+szybko.** Wszystko poniżej z tego wynika: zadania są krótkie, jedno pod drugim,
+po 24--30 na stronie, a odpowiedzi są na końcu książki, żeby nie przerywały
+serii.
 
-Powód nie jest formalny. W `areas/` zadanie stoi obok **swojej** odpowiedzi —
-tak się o zadaniu myśli. W książce odpowiedź otwiera ramkę *następną*, więc
-leży przy zadaniu **kolejnym**. Pisząc wprost w książce, musiałbyś przesuwać
-każdą odpowiedź o jedno miejsce ręcznie.
+Zadanie, które wymaga akapitu wstępu, nie pasuje do tej książki.
 
-`book/chapters/*.tex` jest **generowane** przez `tools/convert_deck.py` i
-nadpisywane przy każdym `make convert`. Zmiana zrobiona tam znika po pierwszej
-regeneracji, a `make drift` i tak zgłosi rozjazd.
+## Dwa źródła
 
+| Gdzie | Co | Kto pisze |
+|---|---|---|
+| `tools/gen_sets.py` | zestawy rachunkowe | generator |
+| `book/sets/*.tex` | zagadki, ciągi, wyzwania, triki | człowiek |
+
+**Rachunków nie wpisuje się ręcznie.** Kilkaset sum przepisanych z palca to
+miejsce, w którym chowają się pomyłki; generator liczy odpowiedź tym samym
+kodem, którym układa zadanie, więc nie mogą się rozjechać.
+
+**Zagadek się nie generuje.** Pułapka słowna to żart, a żart ma autora.
+
+`book/sets/generated/` jest **generowane i nadpisywane** — nie edytuj tam nic.
+
+## Nowe zadanie rachunkowe
+
+Dopisz je do generatora. Zadanie i odpowiedź powstają razem:
+
+```python
+def dodawanie(r, n, lo, hi):
+    for _ in range(n):
+        a, b = r.randint(lo, hi), r.randint(lo, hi)
+        yield f"${fmt(a)} + {fmt(b)}$", fmt(a + b)
 ```
-areas/3-zagadki-logiczne.tex   ← tu piszesz
-        │  make convert
-        ▼
-book/chapters/3-zagadki-logiczne.tex   ← generowane, nie dotykaj
+
+Potem dopisz zestaw do listy `SETS`:
+
+```python
+("15-nowy", "Tytuł zestawu", 2, "4:00", 3, 1015,
+ lambda r: list(dodawanie(r, 30, 101, 999))),
 ```
 
-## Jak wygląda zadanie
+Kolumny: `(nazwa pliku, tytuł, gwiazdki, cel czasowy, liczba kolumn, seed, builder)`.
 
-Para makr: zadanie i odpowiedź do niego. Nazwy pochodzą z prezentacji Beamer,
-od której zaczęło się repozytorium — prezentacja jest zarchiwizowana
-(`deck-archive/`), ale format treści został, bo jest wygodny i bo dzięki temu
-zadania nadal dają się w razie czego złożyć tamtym szablonem.
+**Seed musi być nowy i stały.** Książka ma być identyczna przy każdym buildzie
+— inaczej czytelnik nie porówna dzisiejszego czasu z zeszłotygodniowym.
+
+**Dzielenie buduj od ilorazu**, nie losuj dzielnej i dzielnika osobno, bo
+wyjdzie reszta:
+
+```python
+b, q = r.randint(blo, bhi), r.randint(qlo, qhi)
+yield rf"${fmt(b * q)} \div {fmt(b)}$", fmt(q)
+```
+
+Potem `make sets && make book`.
+
+## Nowe zadanie pisane ręcznie
+
+Do odpowiedniego pliku w `book/sets/`:
 
 ```latex
-% -- 19 --
-\ExerciseSlide[\CategoryBadge[LogicColor!20]{Sylogizm}]
-  {1}{2 min}{%
-    Wszystkie Bloopy są Razzies.\par
-    Wszystkie Razzies są Lazzies.\par
-    Czy wszystkie Bloopy są Lazzies?
-  }
-\AnswerSlide[\CategoryBadge[LogicColor!20]{Sylogizm}]{Tak!}{Bloopy $\to$ Razzies $\to$ Lazzies.}
+\zz{Ile miesi\k{e}cy w roku ma 28 dni?}{Wszystkie \hfill {\itshape\footnotesize Ka\. zdy ma co najmniej 28 dni.}}
 ```
 
-| Argument | Znaczenie |
-|---|---|
-| `[...]` | Odznaka kategorii — opcjonalna, ale w praktyce zawsze jest |
-| `{1}` | Trudność: `1`, `2` lub `3` gwiazdki |
-| `{2 min}` | Limit czasu, tak jak ma się wyświetlić |
-| `{...}` | Treść zadania |
-| `\AnswerSlide{...}{...}` | Wynik, a potem **co najwyżej jedna linijka** podpowiedzi |
+- `\z{treść}{odpowiedź}` — krótkie, mieści się w kolumnie
+- `\zz{treść}{odpowiedź}` — szerokie, zajmuje całą szerokość
 
-Konwerter przenosi odpowiedź o jedną ramkę do przodu — w książce odpowiedź do
-zadania *N* otwiera ramkę *N+1*. Nic z tym nie robisz, to dzieje się samo.
+Numeracja jest automatyczna, w obrębie zestawu. Odpowiedź trafia do dodatku na
+końcu sama — nie ma osobnej listy do zaktualizowania.
+
+## Nowy zestaw pisany ręcznie
+
+```latex
+\begin{zestaw}{Tytuł}{2}{5:00}{2}
+  \z{...}{...}
+\end{zestaw}
+```
+
+Argumenty: tytuł, gwiazdki, cel czasowy, liczba kolumn. Potem dopisz
+`\input{sets/nazwa}` w `book/structure.tex`.
 
 ## Zasady, których bramki nie sprawdzą
 
-**Odpowiedź pokazuje wynik i najwyżej jedną linijkę podpowiedzi.** Bez rozpisywania
-kroków, bez tłumaczenia teorii. To reguła tego repozytorium od commita `01c9d37`.
+**Podpowiedź co najwyżej jednolinijkowa, i tylko wtedy, gdy coś wnosi.** Przy
+rachunkach odpowiedź to sam wynik. Przy trikach podpowiedź **jest** treścią —
+wynik sprawdzisz w dziesięć sekund, chodzi o skrót.
 
-**Żadna instrukcja nie może zależeć od tego, gdzie łamie się strona.** Pisz
-*zanim przeczytasz dalej*, nigdy *zanim odwrócisz stronę*. Miejsce łamania
-strony jest własnością formatu, nie tekstu — zdanie o przewracaniu kartki jest
-prawdziwe w jednym buildzie i fałszywe w drugim. *Zakryj dłonią stronę poniżej*
-jest w porządku: mówi o dłoni, nie o kartce.
+**Gwiazdki i cel czasowy opisują zestaw, nie zadanie.** Nie ma czegoś takiego
+jak trudne zadanie w łatwym zestawie — jeśli jedno zadanie odstaje, jest w złym
+zestawie.
 
-**Gwiazdki mają zgadzać się z limitem czasu:**
-
-| | | |
-|---|---|---|
-| ★ | łatwe | do 1 min |
-| ★★ | średnie | 1–3 min |
-| ★★★ | trudne | 3–5 min |
-
-**Cyfra zostaje cyfrą.** Nie zapisuj liczby słowem tam, gdzie jest liczbą —
-`$2$`, nie *dwa*.
+**Cyfra zostaje cyfrą.** `$2$`, nie *dwa*.
 
 **Diakrytyki kopiuj tak, jak je zastałeś.** Pliki mieszają UTF-8 (`Kolejność`)
-z escape'ami TeX-a (`Mno\. zenie`). Oba dają ten sam znak; ujednolicanie jednego
-w drugi to cicha zmiana w kilkudziesięciu zadaniach, o którą nikt nie prosił.
+z escape'ami TeX-a (`Mno\. zenie`). Oba dają ten sam znak.
 
-**Komentarz `% -- NN --`** numeruje zadania **w obrębie obszaru**, od 1, i tak
-samo numeruje je książka: w rozdziale ramka *N* to zadanie *N*. Komentarz jest
-tylko komentarzem — nic z niego nie trafia na stronę — ale ma się zgadzać z tym,
-co widzi czytelnik na marginesie.
-
-Wstawiając zadanie w środku pliku, przenumeruj resztę **tego jednego pliku**.
-Numeracja jest lokalna, więc dodanie zadania do obszaru 5 nie dotyka obszarów
-1--4. Wcześniej numery były globalne (1--38) i każde wstawienie w środku
-wymagało przenumerowania wszystkiego — a do tego numer w komentarzu nie zgadzał
-się z numerem na marginesie.
-
-## Kolory obszarów
-
-Każdy obszar ma swój akcent — użyj tego, który pasuje do pliku:
-
-| Obszar | Kolor |
-|---|---|
-| 1 Arytmetyka | `ArithColor!20` |
-| 2 Kolejność Działań | `OpsColor!20` |
-| 3 Zagadki Logiczne | `LogicColor!20` |
-| 4 Ciągi i Wzorce | `SeqColor!20` |
-| 5 Mieszane Wyzwania | `MixColor!20` |
+**Żadna instrukcja nie zależy od łamania strony.** Odpowiedzi są na końcu
+książki, więc nie ma czego przewracać — i to jest jeden z powodów, dla których
+ten układ zastąpił poprzedni.
 
 ## Zanim wyślesz pull requesta
 
 ```bash
-make convert   # przenieś zmiany z areas/ do book/chapters/
-make book      # zbuduj i uruchom wszystkie bramki
+make sets      # jeśli ruszałeś generator
+make book      # build + bramki
 ```
 
-`make book` musi zakończyć się bez błędów. Trzy rzeczy, które zgłosi:
+`make book` musi wyjść bez błędów:
 
-- **`errors`, `unresolved refs`, `overfull hbox/vbox`** — muszą być zerowe.
-  Przepełnione pudełko oznacza, że coś wystaje poza kolumnę.
-- **`wrong margin`** — numery ramek muszą być na zewnętrznym marginesie.
-- **`STALE`** — zapomniałeś `make convert`.
-
-Zaktualizuj też liczbę zadań w `README.md`, jeśli się zmieniła.
+- **`errors`, `unresolved refs`, `overfull hbox/vbox`** — zerowe. Przepełnione
+  pudełko znaczy, że coś wystaje poza kolumnę; najczęściej zadanie za szerokie
+  na `\z` i powinno być `\zz`.
+- **`STALE`** — zapomniałeś `make sets`.
 
 **Nie ufaj kodowi wyjścia `latexmk`.** Przy `nonstopmode` nieudany przebieg i
-tak zapisuje PDF. Bramką jest `tools/checklog.py`, i to on decyduje.
+tak zapisuje PDF. Bramką jest `tools/checklog.py`.
 
-## Nowy obszar
-
-Nowy rozdział to trzy zmiany:
-
-1. `areas/N-nazwa.tex` z zadaniami,
-2. wpis w `AREA_META` w `tools/convert_deck.py` (tytuł rozdziału i jedno zdanie
-   wprowadzenia),
-3. `\include{chapters/N-nazwa}` w `book/structure.tex`.
-
-Kolor obszaru dodaj w `book/preamble.tex` obok pozostałych.
+Zaktualizuj liczbę zadań w `README.md`, jeśli się zmieniła — `make book`
+wypisuje ją na końcu.
 
 ## Kontekst
 

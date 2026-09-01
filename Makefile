@@ -6,11 +6,11 @@
 #  #16 is decided -- the book is what this repository publishes. The Beamer
 #  deck is archived under deck-archive/ and is not built; it never built (#21).
 #
-#  areas/ is still the AUTHORING source and book/chapters/ is generated from
-#  it, and that is not leftover plumbing: in areas/ an exercise sits next to
-#  ITS OWN answer, while in the book the answer belongs to the PREVIOUS frame.
-#  Authoring straight into the book format means offsetting every answer by one
-#  by hand, which is exactly the mistake convert_deck.py exists to prevent.
+#  The unit is a SET: ~30 exercises on a page, timed and scored as a whole,
+#  with every answer in one appendix at the back. Arithmetic sets are generated
+#  by tools/gen_sets.py -- the book is scored on volume, and hundreds of
+#  hand-written sums is where arithmetic slips hide. Hand-written sets (logic,
+#  sequences, tricks) live in book/sets/ and the generator never touches them.
 #
 #  NOTE ON THE GATE. `book` runs tools/checklog.py and fails on what it finds.
 #  latexmk's own exit code is not sufficient: under -interaction=nonstopmode a
@@ -24,7 +24,7 @@ BOOKLOG   := $(BOOKDIR)/$(BOOKMAIN).log
 BOOKPDF   := $(BOOKDIR)/$(BOOKMAIN).pdf
 LATEXMK   := latexmk -pdf -interaction=nonstopmode -file-line-error
 
-.PHONY: all book book-only check drift convert clean help
+.PHONY: all book book-only check drift sets clean help
 
 all: book
 
@@ -38,25 +38,22 @@ book-only:
 ## check: read the log properly -- NOT `grep '^!'`, NOT the exit code
 check: drift
 	python3 tools/checklog.py $(BOOKLOG)
-	python3 tools/checkbadges.py $(BOOKPDF)
 
-## drift: book/chapters/ must match areas/ -- they are generated from it
+## drift: generated sets must match tools/gen_sets.py
 #
 # The promise is exactly as wide as the gate: without this, an exercise edited
 # in areas/ and never re-converted leaves the book quietly showing the old one,
 # and every other check stays green because both files are individually valid.
 #
-# #16 is decided and this gate SURVIVES it. The deck is retired, but areas/ is
-# still where exercises are authored, for the reason in the header: the answer
-# shift is a presentation detail and doing it by hand is the error this gate
-# and the converter exist to prevent. What changed is the reason -- it is no
-# longer bridging two outputs, it is guarding one generation step.
+# It also guards the include list: a set added to gen_sets.py and forgotten in
+# sets/generated/_all.tex would be a set nobody ever sees, with every other
+# check green, so the list is generated alongside the sets and compared here.
 drift:
-	python3 tools/convert_deck.py --check
+	python3 tools/gen_sets.py --check
 
-## convert: regenerate book/chapters/ from areas/
-convert:
-	python3 tools/convert_deck.py
+## sets: regenerate the drill sets
+sets:
+	python3 tools/gen_sets.py
 
 ## clean: remove build artifacts
 clean:

@@ -42,3 +42,23 @@ Dwie drogi, obie opisane w #21: zbudować ją pdfLaTeX-em (`latexmk_use_xelatex`
 na `false`), albo zostawić XeLaTeX i zamienić `fontenc`/`inputenc` na `fontspec`
 z czcionką mającą polskie znaki. Nikt tego nie potrzebuje — książka jest
 formatem, który to repozytorium wydaje.
+
+## Co jeszcze tu trafiło
+
+`areas/` oraz `tools/convert_deck.py` i `tools/checkbadges.py` — cały łańcuch
+poprzedniej wersji książki, w której każde zadanie miało własną ramkę, a
+odpowiedź otwierała ramkę następną.
+
+Ta struktura była zła dla tej książki i została zastąpiona zestawami
+(`book/sets/`). Powód jest prosty: książka mierzy **ile zadań zrobisz i jak
+szybko**, a ramka na zadanie mieściła dwa zadania na stronie i wstawiała
+odpowiedź w środek serii. Teraz jest ~30 zadań na stronie, jeden pomiar na
+zestaw i wszystkie odpowiedzi na końcu.
+
+Treść zadań pisanych ręcznie (zagadki, ciągi, wyzwania, triki) została
+przepisana do `book/sets/` i **to tam się ją teraz edytuje**. Kopia w `areas/`
+jest historyczna.
+
+`checkbadges.py` pilnował numerów ramek na zewnętrznym marginesie. Marginesy nie
+mają już numerów, więc sprawdzenie nie mierzy niczego i zostało wyłączone z
+bramek, a nie zostawione jako zielone-zawsze.
