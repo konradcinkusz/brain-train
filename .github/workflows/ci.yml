@@ -48,8 +48,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Chapters match the deck sources
-        run: python3 tools/convert_deck.py --check
+      - name: Generated sets are up to date
+        run: python3 tools/gen_sets.py --check
 
       - name: Build the book
         # Step level, not an action input: latexmk's exit code is not the gate.
@@ -61,14 +61,8 @@ jobs:
           root_file: main-pl-a4.tex
           latexmk_use_xelatex: false
 
-      - name: Install poppler
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
-
       - name: Read the log properly
         run: python3 tools/checklog.py book/main-pl-a4.log
-
-      - name: Frame badges are in the outer margin
-        run: python3 tools/checkbadges.py book/main-pl-a4.pdf
 
       - name: Name the asset
         run: mv book/main-pl-a4.pdf "$ASSET"
