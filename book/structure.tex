@@ -2,18 +2,43 @@
 %  structure.tex -- THE set sequence
 %
 %  One list, read by the main file, so a set cannot exist in the tree and be
-%  missing from the book. The generated block is itself generated
-%  (sets/generated/_all.tex): a set added to tools/gen_sets.py and forgotten
+%  missing from the book. The three generated blocks are themselves generated
+%  (sets/generated/_blok-N.tex): a set added to tools/gen_sets.py and forgotten
 %  here would be a set nobody ever sees, and every other check would pass.
+%
+%  A BLOCK IS A CHAPTER. The book is a three-month course and the blocks are
+%  its three months: Fundament, Tempo, Wyzwanie. The reader who works front to
+%  back gets the ladder; the reader who follows the plan gets the same sets in
+%  an interleaved order. Neither ordering is the other's fault.
 % ============================================================
 
-\chapter{Rachunki na czas}
+\chapter{Blok I — Fundament}
+
+Nic tu nie wymaga metody, której jeszcze nie znasz — wymaga tempa. Dodawanie
+i odejmowanie dwucyfrowe, tabliczka mnożenia, dopełnienia do okrągłych,
+podwajanie. Zestawy są krótkie i mają najniższe cele czasowe w całej książce.
 
 Każdy zestaw ma tyle samo zadań, bo inaczej dwa czasy nie dałyby się
 porównać. Licz w pamięci, bez kartki. Zapisuj czas i wynik pod każdym
 zestawem — dopiero seria pomiarów coś znaczy.
 
-\input{sets/generated/_all}
+\input{sets/generated/_blok-1}
+
+\chapter{Blok II — Tempo}
+
+Trzy cyfry zamiast dwóch, a do tego procenty, ułamki, reszty i kolejność
+działań. To jest zakres roboczy i tu mieszka większość książki. Cele czasowe
+rosną, bo rośnie praca — nie dlatego, że masz zwolnić.
+
+\input{sets/generated/_blok-2}
+
+\chapter{Blok III — Wyzwanie}
+
+Cztery cyfry, mnożenie dwucyfrowe przez dwucyfrowe, nawiasy z potęgami
+i procent czytany od drugiej strony: dana jest część, szukana całość.
+Zestaw z tego bloku potrafi zająć kwadrans i to jest w porządku.
+
+\input{sets/generated/_blok-3}
 
 \chapter{Łamigłówki}
 

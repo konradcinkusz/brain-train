@@ -51,6 +51,9 @@ jobs:
       - name: Generated sets are up to date
         run: python3 tools/gen_sets.py --check
 
+      - name: Every printed answer re-computed from its printed question
+        run: python3 tools/checkanswers.py
+
       - name: Build the book
         # Step level, not an action input: latexmk's exit code is not the gate.
         # Keep going far enough to produce a log, then let checklog.py decide.

@@ -11,11 +11,12 @@
 [![Pull requesty](https://flat.badgen.net/github/prs/konradcinkusz/brain-train?icon=github&color=black&scale=1.01)](https://github.com/konradcinkusz/brain-train/pulls "Pull requesty")
 [![Build book](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml/badge.svg)](https://github.com/konradcinkusz/brain-train/actions/workflows/build.yml "Build book")
 
-Zeszyt ćwiczeń na czas: arytmetyka, kolejność działań, procenty, ciągi,
-zagadki logiczne i triki rachunkowe. **Nie liczy się pojedynczy wynik — liczy
-się ile zadań zrobisz i jak szybko.**
+Zeszyt ćwiczeń na czas: arytmetyka, kolejność działań, procenty, ułamki,
+potęgi, ciągi, zagadki logiczne i triki rachunkowe. **Nie liczy się pojedynczy
+wynik — liczy się ile zadań zrobisz i jak szybko.**
 
-**1064 zadań · 29 zestawów · 27 stron A4.**
+**3304 zadania · 85 zestawów · 66 stron A4.** Materiał na trzy miesiące
+codziennego treningu, ułożony w trzy bloki rosnącej trudności.
 
 ## Quick start
 
@@ -55,15 +56,21 @@ Rubryka na datę jest tam celowo: jeden pomiar nie mówi nic. Wracasz do tego
 samego zestawu za tydzień i porównujesz — ten sam zestaw, krótszy czas, mniej
 pomyłek.
 
-## Poziomy trudności
+## Trzy bloki, rosnąca trudność
 
-Gwiazdki opisują **zestaw**, nie pojedyncze zadanie:
+Każdy blok to osobny rozdział. Kolejność w książce jest drabiną: zaczynasz od
+rzeczy, które umiesz, i kończysz na takich, które trzeba rozłożyć na kroki.
 
-| Gwiazdki | Zestaw |
-|----------|--------|
-| ★ | rozgrzewka |
-| ★★ | normalne tempo |
-| ★★★ | trudniejsze — tu czas rośnie |
+| Blok | Gwiazdki | Co ćwiczysz | Zestawów |
+|---|---|---|---|
+| **I — Fundament** | ★ | dwie cyfry, tabliczka, dopełnienia, jednostki, równania jednokrokowe | 24 |
+| **II — Tempo** | ★★ | trzy cyfry, procenty, ułamki, reszty, potęgi, kolejność działań | 34 |
+| **III — Wyzwanie** | ★★★ | cztery cyfry, mnożenie dwucyfrowe, nawiasy z potęgami, procent od drugiej strony | 23 |
+| **Łamigłówki** | ★★ | zagadki, ciągi, triki — pisane ręcznie | 4 |
+
+Gwiazdki opisują **zestaw**, nie pojedyncze zadanie. Cel czasowy też: to
+sekundy na zadanie razy długość zestawu, więc rośnie razem z pracą, a nie
+dlatego, że ktoś go zgadł.
 
 ## Struktura repozytorium
 
@@ -79,9 +86,11 @@ Gwiazdki opisują **zestaw**, nie pojedyncze zadanie:
 │       ├── 21-ciagi.tex              #   wyzwania, triki — tego się nie generuje
 │       ├── 22-mieszane.tex
 │       ├── 23-triki.tex
-│       └── generated/                # GENEROWANE (make sets) — zestawy rachunków
+│       └── generated/                # GENEROWANE (make sets) — 81 zestawów
+│           └── _blok-{1,2,3}.tex     #   listy \input, jedna na rozdział
 ├── tools/
 │   ├── gen_sets.py                   # Generator zestawów + bramka drift
+│   ├── checkanswers.py               # Przelicza odpowiedzi drugą ścieżką
 │   └── checklog.py                   # Bramka logu (nie kod wyjścia!)
 ├── deck-archive/                     # Poprzednie wersje — nie budowane
 ├── .github/workflows/
@@ -101,10 +110,11 @@ Gwiazdki opisują **zestaw**, nie pojedyncze zadanie:
 | `make book` | Buduje książkę i uruchamia wszystkie bramki |
 | `make sets` | Regeneruje zestawy rachunkowe |
 | `make drift` | Sprawdza, czy wygenerowane zestawy są aktualne |
+| `make answers` | Przelicza każdą odpowiedź z wydrukowanego pytania |
 | `make check` | Same bramki, bez budowania |
 | `make clean` | Usuwa artefakty |
 
-Trzy bramki, każda sprawdza coś, czego pozostałe nie widzą:
+Cztery bramki, każda sprawdza coś, czego pozostałe nie widzą:
 
 - **`tools/checklog.py`** — błędy, nierozwiązane referencje, przepełnione pudełka
   i brak zbieżności. To jest bramka, **nie kod wyjścia `latexmk`**: przy
@@ -116,14 +126,24 @@ Trzy bramki, każda sprawdza coś, czego pozostałe nie widzą:
   `\input`-ów: zestaw dodany do generatora i zapomniany w liście to zestaw,
   którego nikt nigdy nie zobaczy.
 
-Trzecia bramka siedzi w preambule, nie w `tools/`: każdy zestaw ma etykietę
+- **`tools/checkanswers.py`** — czyta `.tex`, który wchodzi do builda, parsuje
+  pytanie tak, jak widzi je czytelnik, i liczy odpowiedź **drugą ścieżką**.
+  Generator gwarantuje, że odpowiedź zgadza się z pytaniem, bo liczy oba z tych
+  samych liczb — ale builder pomylony konsekwentnie (minus zamiast plusa,
+  procent od złej liczby) wydrukuje zgodną parę. To jedyna bramka, która patrzy
+  na stronę, a nie na kod, który ją zrobił. **Kształt pytania, którego nie zna,
+  jest błędem, nie pominięciem** — inaczej przestałaby mierzyć w dniu, w którym
+  ktoś doda buildera.
+
+Czwarta bramka siedzi w preambule, nie w `tools/`: każdy zestaw ma etykietę
 w nagłówku i w stopce, a build **przerywa się błędem**, jeśli obie wypadną na
 różnych stronach. Zestaw rozbity między strony to rubryka z czasem po drugiej
 stronie kartki niż zadania, które ocenia — a ta rubryka jest w tej książce
 najważniejsza.
 
 Generator liczy odpowiedzi tym samym kodem, który układa zadania, więc
-wydrukowana odpowiedź nie może nie zgadzać się ze swoim zadaniem.
+wydrukowana odpowiedź nie może nie zgadzać się ze swoim zadaniem — a
+`make answers` sprawdza jeszcze, czy sam kod nie liczy konsekwentnie źle.
 
 <p align="right">(<a href="#readme-top">wróć na górę</a>)</p>
 
