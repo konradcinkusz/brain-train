@@ -1,5 +1,5 @@
 % ======================================================
-%  "Plan na 13 tygodni" -- the reader-facing half of the course.
+%  "Plan na N tygodni" -- the reader-facing half of the course.
 %
 %  The tables are generated (tools/gen_plan.py); this file is the prose that
 %  says what they are for. The split is deliberate: a day naming a set by
@@ -13,14 +13,20 @@
 %  difference between a reason and a sales pitch.
 % ======================================================
 
-\chapter*{Plan na 13 tygodni}
-\addcontentsline{toc}{chapter}{Plan na 13 tygodni}
+% Every count on this page is \input from the generator. Written out by hand
+% they were `91 dni, 13 tygodni` in five places, and a fourth month made all
+% five wrong at once with nothing in the repository able to see it.
+\input{plan/generated/liczby}
+
+\chapter*{Plan na \btplantyg\ tygodni}
+\addcontentsline{toc}{chapter}{Plan na \btplantyg\ tygodni}
 % \chapter* sets no mark, so without this every page of this chapter
 % carries whatever the last \markboth was -- which is `Spis treści`.
-\markboth{Plan na 13 tygodni}{Plan na 13 tygodni}
+\markboth{Plan na \btplantyg\ tygodni}{Plan na \btplantyg\ tygodni}
 
-Książka wystarcza na kwartał codziennej pracy: \textbf{91 dni, 13 tygodni,
-jeden zestaw dziennie}. Możesz jej używać bez planu — po kolei, od pierwszej
+Książka wystarcza na cztery miesiące codziennej pracy: \textbf{\btplandni{}~dni,
+\btplantyg{}~tygodni, jeden zestaw dziennie}. Kto zatrzyma się po trzynastu
+tygodniach, i tak skończył kurs — czwarty blok jest nadprogramowy. Możesz jej używać bez planu — po kolei, od pierwszej
 strony. Plan jest po to, żeby nie trzeba było codziennie decydować, co robić,
 i żeby kolejność nie była przypadkowa.
 
@@ -41,7 +47,7 @@ dnia — przerwana seria kosztuje więcej niż jeden pominięty pomiar.
 \section*{Trzy rzeczy, na których stoi ta kolejność}
 
 \textbf{Rosnące obciążenie.} Cztery tygodnie Bloku I, pięć Bloku II, cztery
-Bloku III. Miesiąc dodawania dwucyfrowego jest tym, co zamienia dodawanie
+Bloku III i cztery Bloku IV. Miesiąc dodawania dwucyfrowego jest tym, co zamienia dodawanie
 trzycyfrowe w kwestię tempa, a nie metody.
 
 \textbf{Przeplot.} Dwa dni pod rząd nigdy nie ćwiczą tego samego. Sześć
@@ -82,7 +88,7 @@ Trzynaście tygodni to nie jest termin.
 
 \begin{center}\footnotesize
 \begin{tabular}{@{}ll@{}}
-  \textbf{Dzień} & numer dnia planu, od 1 do 91 \\
+  \textbf{Dzień} & numer dnia planu, od 1 do \btplandni{} \\
   \textbf{Zestaw dnia} & numer zestawu w tej książce i jego tytuł \\
   \textbf{Cel} & czas docelowy zestawu — cel, nie norma \\
   \textbf{Powt.} & numer zestawu sprzed tygodnia, do powtórzenia \\

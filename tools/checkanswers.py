@@ -255,6 +255,68 @@ def _z_rzymskich(m):
     return Fraction(from_roman(m.string))
 
 
+@rule(r"^\$(\d+) : (\d+) = ([\d\\,]+) : \?\$$")
+def _proporcja(m):
+    a, b, c = int(m[1]), int(m[2]), n(m[3])
+    return b * c / a
+
+
+SQ_K = {("m^2", "cm^2"): 10000, ("km^2", "m^2"): 1000000,
+        ("ha", "m^2"): 10000, ("cm^2", "mm^2"): 100}
+
+
+@rule(r"^pierwiastek sześcienny z \$([\d\\,]+)\$$")
+def _szescienny(m):
+    v = int(n(m[1]))
+    root = round(v ** (1 / 3))
+    for c in (root - 1, root, root + 1):      # cube root by float is off by
+        if c ** 3 == v:                       # one near the boundaries
+            return Fraction(c)
+    raise ValueError(f"{v} nie jest sześcianem")
+
+
+@rule(r"^\$(\d+)\$ h \$(\d+)\$ min \$\+\$ \$(\d+)\$ h \$(\d+)\$ min$")
+def _czas_suma(m):
+    t = int(m[1]) * 60 + int(m[2]) + int(m[3]) * 60 + int(m[4])
+    return f"{t // 60} h {t % 60} min"
+
+
+@rule(r"^\$(\d+)\$ z wagą \$(\d+)\$, \$(\d+)\$ z wagą \$(\d+)\$$")
+def _wazona(m):
+    v1, w1, v2, w2 = (int(x) for x in m.groups())
+    return Fraction(v1 * w1 + v2 * w2, w1 + w2)
+
+
+@rule(r"^\$([\d\\,]+) \\rightarrow ([\d\\,]+)\$$")
+def _zmiana(m):
+    a, b = n(m[1]), n(m[2])
+    return f"{int(abs(b - a) * 100 / a)}\\%"
+
+
+@rule(r"^\$(\d+)x ([+-]) (\d+) = (-?[\d\\,]+)\$$")
+def _rown2(m):
+    a, sign, b, c = int(m[1]), m[2], int(m[3]), n(m[4])
+    return (c - b if sign == "+" else c + b) / a
+
+
+@rule(r"^\$([\d\\,]+)\$ \$([+-])(\d+)\\%\$ \$([+-])(\d+)\\%\$$")
+def _skladany(m):
+    v = n(m[1])
+    for sign, p in ((m[2], int(m[3])), (m[4], int(m[5]))):
+        v = v * (100 + p if sign == "+" else 100 - p) / 100
+    return v
+
+
+@rule(r"^\$([\d\\,]+)\$ \$([a-z^0-9]+)\$ \$\\rightarrow\$ \$([a-z^0-9]+)\$$")
+def _jedn_kw(m):
+    v, src, dst = n(m[1]), m[2], m[3]
+    if (src, dst) in SQ_K:
+        return v * SQ_K[(src, dst)]
+    if (dst, src) in SQ_K:
+        return v / SQ_K[(dst, src)]
+    raise ValueError(f"nieznana para jednostek {src}->{dst}")
+
+
 @rule(r"^\$([\d\\,]+(?:, [\d\\,]+)+), \\ldots\$$")
 def _ciag(m):
     """A sequence is the one shape whose answer is not a computation but an
