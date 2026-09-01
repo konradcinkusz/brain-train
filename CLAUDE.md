@@ -378,19 +378,27 @@ in the gate looking like coverage.
 
 ---
 
-## Releasing, and the one thing a web session cannot do
+## Releasing
 
-**A tag cannot be pushed from a Claude Code web session.** `git push origin
-<tag>` returns HTTP 403 through the sandbox's git proxy, and every release tool
-available there is read-only, so a session can prepare a release and cannot cut
-one. Tag from a local clone:
+**A tag still cannot be pushed from a Claude Code web session.** `git push
+origin <tag>` returns HTTP 403 -- and note where it comes from: the agent
+proxy's own status page reports no relay failure for github.com at all, so it
+is the session's git credentials, which carry branch access and not tag access.
+A `--dry-run` push reports success, which is worth knowing before trusting one.
+
+**That is no longer a reason a session cannot cut a release.** `ci.yml` takes
+`workflow_dispatch` with a required version input, and the workflow's own
+`GITHUB_TOKEN` has `contents: write`, so it creates the tag it is given. The
+same three gates stand in front of it either way. The version is required
+rather than derived, because a release is the one thing here that cannot be
+taken back.
+
+Tagging from a local clone still works and is still the ordinary route:
 
 ```bash
 git checkout main && git pull
 git tag -a v2.0.0 -m "..." && git push origin v2.0.0
-```
-
-The tag is the only manual step. `ci.yml` does the rest and cannot publish an
+``` `ci.yml` does the rest and cannot publish an
 empty release: the artifact upload is `if-no-files-found: error`, the release
 step is `fail_on_unmatched_files`, and a `test -s` stands between them.
 
