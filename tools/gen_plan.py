@@ -50,6 +50,7 @@ from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from gen_sets import BASIC, Volume, book_order  # noqa: E402
+from gen_sets_adv import ADV  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -99,7 +100,15 @@ def spread(*lengths) -> dict:
 # longest and least mechanical in the book, so they belong where the reader is
 # strongest rather than in week two -- and Blok IV's weeks are already the
 # hardest material in the volume.
-PLANS = {"basic": Plan(BASIC, "plan", spread(4, 5, 4, 4), hand_phase=3)}
+PLANS = {
+    "basic": Plan(BASIC, "plan", spread(4, 5, 4, 4), hand_phase=3),
+    # The advanced volume is four equal blocks -- none of them is the working
+    # range the way Blok II is in the basic book, so none of them earns the
+    # extra week. Its puzzle sets go into the LAST block's weeks rather than
+    # the third: there are only two of them and they are the hardest pages in
+    # either volume.
+    "adv": Plan(ADV, "plan-adv", spread(4, 4, 4, 4), hand_phase=4),
+}
 
 
 def interleave(items):

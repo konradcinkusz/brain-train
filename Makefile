@@ -20,24 +20,40 @@
 
 BOOKDIR   := book
 BOOKMAIN  := main-pl-a4
-BOOKLOG   := $(BOOKDIR)/$(BOOKMAIN).log
-BOOKPDF   := $(BOOKDIR)/$(BOOKMAIN).pdf
+ADVMAIN   := main-pl-a4-adv
 LATEXMK   := latexmk -pdf -interaction=nonstopmode -file-line-error
 
-.PHONY: all book book-only check drift answers sets plan clean help
+.PHONY: all book book-adv books book-only adv-only check drift answers \
+        sets plan clean help
 
-all: book
+all: books
 
-## book: build the A4 book and gate on its log
-book: book-only check
+## books: build BOTH volumes and gate on both logs
+books: book-only adv-only check
 
-## book-only: build without the gate (use when iterating on layout)
+## book: the basic volume alone, gated
+book: book-only drift answers
+	python3 tools/checklog.py $(BOOKDIR)/$(BOOKMAIN).log
+
+## book-adv: the advanced volume alone, gated
+book-adv: adv-only drift answers
+	python3 tools/checklog.py $(BOOKDIR)/$(ADVMAIN).log
+
+## book-only: build the basic volume without the gate
 book-only:
 	cd $(BOOKDIR) && $(LATEXMK) $(BOOKMAIN).tex || true
 
-## check: read the log properly -- NOT `grep '^!'`, NOT the exit code
+## adv-only: build the advanced volume without the gate
+adv-only:
+	cd $(BOOKDIR) && $(LATEXMK) $(ADVMAIN).tex || true
+
+## check: read BOTH logs properly -- NOT `grep '^!'`, NOT the exit code
+#
+# Both, always. A gate scoped to one volume is a promise scoped to one volume,
+# and the other would go on shipping whatever it liked with every check green.
 check: drift answers
-	python3 tools/checklog.py $(BOOKLOG)
+	python3 tools/checklog.py $(BOOKDIR)/$(BOOKMAIN).log
+	python3 tools/checklog.py $(BOOKDIR)/$(ADVMAIN).log
 
 ## drift: generated sets must match tools/gen_sets.py
 #
@@ -51,7 +67,9 @@ check: drift answers
 # here -- one per block, because a block is a chapter.
 drift:
 	python3 tools/gen_sets.py --check
+	python3 tools/gen_sets_adv.py --check
 	python3 tools/gen_plan.py --check
+	python3 tools/gen_plan.py --check --volume adv
 
 ## answers: re-compute every printed answer from the printed question
 #
@@ -70,15 +88,19 @@ answers:
 # the schedule changed.
 sets:
 	python3 tools/gen_sets.py
+	python3 tools/gen_sets_adv.py
 	python3 tools/gen_plan.py
+	python3 tools/gen_plan.py --volume adv
 
-## plan: regenerate the thirteen-week plan only
+## plan: regenerate both volumes' plans only
 plan:
 	python3 tools/gen_plan.py
+	python3 tools/gen_plan.py --volume adv
 
 ## clean: remove build artifacts
 clean:
 	cd $(BOOKDIR) && latexmk -C $(BOOKMAIN).tex 2>/dev/null || true
+	cd $(BOOKDIR) && latexmk -C $(ADVMAIN).tex 2>/dev/null || true
 	rm -f $(BOOKDIR)/*.aux $(BOOKDIR)/chapters/*.aux $(BOOKDIR)/frontmatter/*.aux
 
 ## help: list targets

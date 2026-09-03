@@ -13,12 +13,22 @@ a odpowiedzi są na końcu książki, żeby nie przerywały serii.
 
 Zadanie, które wymaga akapitu wstępu, nie pasuje do tej książki.
 
+## Dwa tomy
+
+`tools/gen_sets.py` to tom podstawowy, `tools/gen_sets_adv.py` — zaawansowany.
+Drugi importuje z pierwszego całą maszynerię i wszystkie buildery; ma własne
+tylko te, których pierwszy nie potrzebuje. **Nie kopiuj między nimi niczego** —
+jeśli obu potrzebny jest ten sam builder, jego miejsce jest w `gen_sets.py`.
+
+Seedy: `1001`–`1225` należą do tomu I, `2001`–`2100` do tomu II, a `audit()`
+odmawia seeda, którego używa drugi tom.
+
 ## Dwa źródła
 
 | Gdzie | Co | Kto pisze |
 |---|---|---|
-| `tools/gen_sets.py` | zestawy rachunkowe | generator |
-| `book/sets/*.tex` | zagadki, ciągi, wyzwania, triki | człowiek |
+| `tools/gen_sets.py`, `tools/gen_sets_adv.py` | zestawy rachunkowe | generator |
+| `book/sets/*.tex`, `book/sets-adv/*.tex` | zagadki, ciągi, wyzwania, triki | człowiek |
 
 **Rachunków nie wpisuje się ręcznie.** Kilkaset sum przepisanych z palca to
 miejsce, w którym chowają się pomyłki; generator liczy odpowiedź tym samym

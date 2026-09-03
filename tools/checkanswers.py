@@ -32,7 +32,8 @@ import re
 import sys
 from collections import Counter
 from fractions import Fraction
-from math import gcd, isqrt
+from datetime import date
+from math import comb, factorial, gcd, isqrt
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -94,6 +95,42 @@ def canon(a: str):
 #  One rule per question shape. Each returns what the answer SHOULD be,
 #  in canon()'s vocabulary, or raises to say the shape did not match.
 # ------------------------------------------------------------------
+ADV_WEEKDAYS = ["poniedziałek", "wtorek", "środa", "czwartek", "piątek",
+                "sobota", "niedziela"]
+
+
+def _factor(v: int):
+    out, d = [], 2
+    while d * d <= v:
+        e = 0
+        while v % d == 0:
+            v //= d
+            e += 1
+        if e:
+            out.append((d, e))
+        d += 1
+    if v > 1:
+        out.append((v, 1))
+    return out
+
+
+def _dec_str(f: Fraction) -> str:
+    """The same digit-by-digit rendering the advanced generator uses. Written
+    out again here on purpose: a shared helper would make the two agree by
+    construction, which is exactly what this checker exists NOT to do."""
+    whole, rest = divmod(f.numerator, f.denominator)
+    if rest == 0:
+        return str(whole)
+    digits = ""
+    for _ in range(12):
+        rest *= 10
+        d, rest = divmod(rest, f.denominator)
+        digits += str(d)
+        if rest == 0:
+            return f"{whole},{digits}"
+    raise ValueError("rozwinięcie nie kończy się")
+
+
 PURE = re.compile(r"^[\d\s+\-*/().^]+$")
 
 
@@ -201,14 +238,14 @@ def _srednia(m):
     return Fraction(sum(xs), len(xs))
 
 
-@rule(r"^NWD\$\((\d+), (\d+)\)\$$")
+@rule(r"^NWD\$\(([\d\\,]+), ([\d\\,]+)\)\$$")
 def _nwd(m):
-    return Fraction(gcd(int(m[1]), int(m[2])))
+    return Fraction(gcd(int(n(m[1])), int(n(m[2]))))
 
 
-@rule(r"^NWW\$\((\d+), (\d+)\)\$$")
+@rule(r"^NWW\$\(([\d\\,]+), ([\d\\,]+)\)\$$")
 def _nww(m):
-    a, b = int(m[1]), int(m[2])
+    a, b = int(n(m[1])), int(n(m[2]))
     return Fraction(a * b // gcd(a, b))
 
 
@@ -349,6 +386,235 @@ def _ciag(m):
     return cands
 
 
+
+
+# ------------------------------------------------------------------
+#  The advanced volume's shapes.
+# ------------------------------------------------------------------
+
+@rule(r"^\$(\d+)/(\d+) \\div (\d+)/(\d+)\$$")
+def _ulamki_dziel(m):
+    """Dividing fractions needs its own rule and is the reason it has one:
+    read as arithmetic, `4/5 \div 1/3` becomes `4/5/1/3`, which is 4/15 and
+    not 12/5. Multiplication happens to survive that reading; division does
+    not, and the generic evaluator reported forty wrong answers before this
+    rule existed."""
+    return Fraction(int(m[1]), int(m[2])) / Fraction(int(m[3]), int(m[4]))
+
+
+@rule(r"^\$(\d+)/(\d+) \\times (\d+)/(\d+)\$$")
+def _ulamki_razy(m):
+    return Fraction(int(m[1]), int(m[2])) * Fraction(int(m[3]), int(m[4]))
+
+
+@rule(r"^\$([\d\\,]+)\$ dwójkowo$")
+def _na_dwojkowy(m):
+    return f"{int(n(m[1])):b}"
+
+
+@rule(r"^\$([01]+)_2\$$")
+def _z_dwojkowego(m):
+    return Fraction(int(m[1], 2))
+
+
+@rule(r"^\$([01]+)_2 \+ ([01]+)_2\$$")
+def _binarna_suma(m):
+    return f"{int(m[1], 2) + int(m[2], 2):b}"
+
+
+@rule(r"^\$([\d\\,]+)\$ szesnastkowo$")
+def _na_hex(m):
+    return f"{int(n(m[1])):X}"
+
+
+@rule(r"^\$\\mathrm\{([0-9A-F]+)\}_\{16\}\$$")
+def _z_hex(m):
+    return Fraction(int(m[1], 16))
+
+
+@rule(r"^\$([\d\\,]+) \\bmod (\d+)\$$")
+def _modulo(m):
+    return Fraction(int(n(m[1])) % int(m[2]))
+
+
+@rule(r"^\$(\d+)\^\{(\d+)\} \\bmod (\d+)\$$")
+def _potega_modulo(m):
+    return Fraction(pow(int(m[1]), int(m[2]), int(m[3])))
+
+
+@rule(r"^\$([\d\\,]+)\$ --- cyfra kontrolna$")
+def _cyfra(m):
+    v = int(n(m[1]))
+    return Fraction(1 + (v - 1) % 9)
+
+
+@rule(r"^\$([\d\\,]+)\$ na czynniki$")
+def _rozklad(m):
+    parts = [f"{p}^{{{e}}}" if e > 1 else f"{p}" for p, e in _factor(int(n(m[1])))]
+    return "$" + r" \cdot ".join(parts) + "$"
+
+
+@rule(r"^ile dzielników ma \$([\d\\,]+)\$$")
+def _dzielniki(m):
+    d = 1
+    for _, e in _factor(int(n(m[1]))):
+        d *= e + 1
+    return Fraction(d)
+
+
+@rule(r"^czy \$([\d\\,]+)\$ jest pierwsza\?$")
+def _pierwsza(m):
+    v = int(n(m[1]))
+    return "tak" if v > 1 and all(v % k for k in range(2, isqrt(v) + 1)) else "nie"
+
+
+@rule(r"^pierwsza liczba pierwsza po \$([\d\\,]+)\$$")
+def _nastepna(m):
+    v = int(n(m[1])) + 1
+    while any(v % k == 0 for k in range(2, isqrt(v) + 1)):
+        v += 1
+    return Fraction(v)
+
+
+@rule(r"^czy \$([\d\\,]+)\$ jest kwadratem\?$")
+def _kwadrat(m):
+    v = int(n(m[1]))
+    return "tak" if isqrt(v) ** 2 == v else "nie"
+
+
+@rule(r"^\$1 \+ 2 \+ \\ldots \+ (\d+)\$$")
+def _suma_kolejnych(m):
+    k = int(m[1])
+    return Fraction(k * (k + 1) // 2)
+
+
+@rule(r"^\$1 \+ 3 \+ \\ldots \+ (\d+)\$$")
+def _suma_nieparzystych(m):
+    k = (int(m[1]) + 1) // 2
+    return Fraction(k * k)
+
+
+@rule(r"^\$2 \+ 4 \+ \\ldots \+ (\d+)\$$")
+def _suma_parzystych(m):
+    k = int(m[1]) // 2
+    return Fraction(k * (k + 1))
+
+
+@rule(r"^\$(\d+)\^\{-(\d+)\}\$$")
+def _potega_ujemna(m):
+    return Fraction(1, int(m[1]) ** int(m[2]))
+
+
+@rule(r"^\$(\d+)\^\{0\}\$$")
+def _potega_zero(m):
+    return Fraction(1)
+
+
+@rule(r"^\$([\d\\,]+)\^\{(\d+)/(\d+)\}\$$")
+def _potega_ulamkowa(m):
+    base, p, root = int(n(m[1])), int(m[2]), int(m[3])
+    b = round(base ** (1 / root))
+    for c in (b - 1, b, b + 1):
+        if c ** root == base:
+            return Fraction(c ** p)
+    raise ValueError(f"{base} nie jest {root}-tą potęgą")
+
+
+@rule(r"^\$\\log_\{(\d+)\} ([\d\\,]+)\$$")
+def _log(m):
+    b, v, e = int(m[1]), int(n(m[2])), 0
+    while v > 1:
+        if v % b:
+            raise ValueError(f"{v} nie jest potęgą {b}")
+        v //= b
+        e += 1
+    return Fraction(e)
+
+
+@rule(r"^\$(\d+) \\cdot 10\^\{(\d+)\} \\times (\d+) \\cdot 10\^\{(\d+)\}\$$")
+def _notacja(m):
+    prod, e = int(m[1]) * int(m[3]), int(m[2]) + int(m[4])
+    if prod < 10:
+        mant = str(prod)
+    elif prod % 10 == 0:
+        mant, e = str(prod // 10), e + 1
+    else:
+        mant, e = f"{prod // 10}{{,}}{prod % 10}", e + 1
+    return f"${mant} \\cdot 10^{{{e}}}$"
+
+
+@rule(r"^\$(\d+)/(\d+)\$ na procent$")
+def _na_procent(m):
+    return _dec_str(Fraction(int(m[1]) * 100, int(m[2]))) + "\\%"
+
+
+@rule(r"^\$(\d+)/(\d+)\$ dziesiętnie$")
+def _na_dziesietny(m):
+    return _dec_str(Fraction(int(m[1]), int(m[2])))
+
+
+@rule(r"^\$(\d+)!\$$")
+def _silnia(m):
+    return Fraction(factorial(int(m[1])))
+
+
+@rule(r"^\$C\((\d+), (\d+)\)\$$")
+def _kombinacje(m):
+    return Fraction(comb(int(m[1]), int(m[2])))
+
+
+@rule(r"^\$P\((\d+), (\d+)\)\$$")
+def _wariacje(m):
+    a, b = int(m[1]), int(m[2])
+    return Fraction(factorial(a) // factorial(a - b))
+
+
+@rule(r"^(\d+)\.(\d+)\.(\d+) --- jaki dzień tygodnia$")
+def _kalendarz(m):
+    return ADV_WEEKDAYS[date(int(m[3]), int(m[2]), int(m[1])).weekday()]
+
+
+@rule(r"^\$([\d\\,]+)\$ km w (.+) --- km/h$")
+def _predkosc(m):
+    """The time reads `2 h`, `45 min` or `1 h 15 min`, so it is captured whole
+    and taken apart here rather than spelt as three near-identical patterns."""
+    h = re.search(r"\$(\d+)\$ h", m[2])
+    mi = re.search(r"\$(\d+)\$ min", m[2])
+    mins = (int(h[1]) if h else 0) * 60 + (int(mi[1]) if mi else 0)
+    if not mins:
+        raise ValueError(f"nie umiem odczytać czasu z {m[2]!r}")
+    return n(m[1]) * 60 / mins
+
+
+@rule(r"^\$([\d,]+)\$ km/h \$\\rightarrow\$ m/s$")
+def _kmh(m):
+    return _dec_str(Fraction(int(m[1]) * 10, 36))
+
+
+@rule(r"^\$([\d,]+)\$ m/s \$\\rightarrow\$ km/h$")
+def _ms(m):
+    return n(m[1]) * Fraction(36, 10)
+
+
+@rule(r"^tam \$(\d+)\$ km/h, z powrotem \$(\d+)\$ km/h --- średnia$")
+def _harmoniczna(m):
+    a, b = int(m[1]), int(m[2])
+    return Fraction(2 * a * b, a + b)
+
+
+@rule(r"^\$([\d\\,]+)\$ przy \$(\d+)\\%\$ przez \$(\d+)\$ lata$")
+def _procent_lata(m):
+    v, p = int(n(m[1])), int(m[2])
+    for _ in range(int(m[3])):
+        v = v * (100 + p) // 100
+    return Fraction(v)
+
+
+@rule(r"^skala \$1:([\d\\,]+)\$, \$(\d+)\$ cm --- ile km$")
+def _skala(m):
+    return _dec_str(Fraction(int(m[2]) * int(n(m[1])) // 100, 1000))
+
+
 def expected(q: str):
     for pat, fn in RULES:
         m = pat.match(q)
@@ -381,7 +647,18 @@ def main() -> int:
                 continue
             checked += 1
             got = canon(ans)
-            ok = (got in want) if isinstance(want, set) else (got == want)
+            # A rule returning a STRING means the answer is that literal text
+            # -- a binary expansion, a factorisation, a weekday. Those must be
+            # compared against what was printed rather than against canon()'s
+            # reading of it: `11101111` is a perfectly good decimal number and
+            # canon() dutifully parsed it as one, so every binary answer in the
+            # volume compared unequal to itself.
+            if isinstance(want, set):
+                ok = got in want
+            elif isinstance(want, str):
+                ok = ans.strip() == want
+            else:
+                ok = got == want
             if not ok:
                 # A negative answer written `-8` is a hyphen in the text-mode
                 # appendix, not a minus, so it never parses as a number here.
