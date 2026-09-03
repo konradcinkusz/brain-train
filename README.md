@@ -16,8 +16,9 @@ Zeszyt ćwiczeń na czas: arytmetyka, kolejność działań, procenty, ułamki,
 potęgi, ciągi, zagadki logiczne i triki rachunkowe. **Nie liczy się pojedynczy
 wynik — liczy się ile zadań zrobisz i jak szybko.**
 
-**4424 zadania · 113 zestawów · 110 stron A4** — i gotowy **plan na 17 tygodni**,
-dzień po dniu.
+**Dwa tomy.** Podstawowy: 4424 zadania, 113 zestawów, 110 stron, plan na 17
+tygodni. Zaawansowany: 4032 zadania, 102 zestawy, 111 stron, plan na 16
+tygodni. Razem **8456 zadań i 231 dni treningu**, dzień po dniu.
 
 ### [⬇ Pobierz PDF](https://github.com/konradcinkusz/brain-train/releases/latest/download/trening-mozgu-a4.pdf)
 
@@ -70,6 +71,34 @@ pomyłek.
 
 Odpowiedzi z tyłu mają w żywej paginie zakres zestawów na stronie
 (`Odpowiedzi 26–37`), bo osiem stron tablicy bez tego przegląda się palcem.
+
+## Dwa tomy, i czym się różnią
+
+| | **Trening Mózgu** | **Trening Mózgu — Zaawansowany** |
+|---|---|---|
+| dla kogo | od zera | po pierwszym tomie |
+| co ćwiczy | rachunki: cztery działania, procenty, ułamki dziesiętne, kolejność | operacje, których w pierwszym nie ma wcale |
+| bloki | Fundament · Tempo · Wyzwanie · Mistrzostwo | Systemy i reszty · Struktura liczby · Ułamki i potęgi · Zastosowania |
+| zestawy | 113 | 102 |
+| zadania | 4424 | 4032 |
+| plan | 119 dni / 17 tygodni | 112 dni / 16 tygodni |
+
+**Drugi tom to nie pierwszy z większymi liczbami.** Pierwszy kończy się na
+dodawaniu pięciocyfrowym, mnożeniu trzycyfrowego przez dwucyfrowe i procencie
+składanym — dopisanie jeszcze jednej cyfry daje działanie *dłuższe*, a nie
+trudniejsze. Drugi tom robi rzeczy, których w pierwszym nie ma:
+
+- **systemy pozycyjne** — dwójkowy i szesnastkowy, w obie strony
+- **arytmetyka modularna** — reszty, potęgi modulo, cyfra kontrolna
+- **struktura liczby** — czynniki pierwsze, liczba dzielników, Euklides
+- **ułamki mnożone i dzielone**, wykładnik ujemny i ułamkowy, logarytmy,
+  notacja naukowa
+- **zastosowania, w których intuicja zawodzi** — średnia prędkość tam
+  i z powrotem, procent przez lata, kombinatoryka, dzień tygodnia z daty
+
+Reguły gry są te same: czterdzieści zadań w zestawie, w pamięci, na stoper,
+odpowiedzi na końcu książki. Oba tomy dzielą preambułę, bramki i CI — nie są
+osobnymi projektami, tylko dwiema listami zestawów nad jedną maszynerią.
 
 ## Plan na 17 tygodni
 
@@ -134,11 +163,15 @@ dlatego, że ktoś go zgadł.
 ```
 .
 ├── book/
-│   ├── main-pl-a4.tex                # Plik główny — cienki, format jest w preambule
+│   ├── main-pl-a4.tex                # Tom I — cienki, format jest w preambule
+│   ├── main-pl-a4-adv.tex            # Tom II — różni się pięcioma liniami
 │   ├── preamble.tex                  # Zestaw, \z, magazyn odpowiedzi
-│   ├── structure.tex                 # JEDNA lista zestawów
+│   ├── structure.tex                 # JEDNA lista zestawów tomu I
+│   ├── structure-adv.tex             #   i jedna tomu II
 │   ├── frontmatter/                  # Tytuł, „Jak korzystać”, plan
 │   ├── plan/generated/               # GENEROWANE — tabele planu i jego liczby
+│   ├── plan-adv/generated/           #   to samo dla tomu II
+│   ├── sets-adv/                     # Tom II: zestawy ręczne i generowane
 │   └── sets/
 │       ├── 20-zagadki.tex            # Pisane ręcznie: zagadki, ciągi,
 │       ├── 21-ciagi.tex              #   wyzwania, triki — tego się nie generuje
@@ -148,7 +181,8 @@ dlatego, że ktoś go zgadł.
 │           └── _blok-*.tex           #   listy \input, jedna na rozdział
 ├── tools/
 │   ├── gen_sets.py                   # Generator zestawów + bramka drift
-│   ├── gen_plan.py                   # Generator planu i harmonogramu
+│   ├── gen_sets_adv.py               # Tom II: własne buildery i lista
+│   ├── gen_plan.py                   # Generator planów obu tomów
 │   ├── checkanswers.py               # Przelicza odpowiedzi drugą ścieżką
 │   └── checklog.py                   # Bramka logu (nie kod wyjścia!)
 ├── deck-archive/                     # Poprzednie wersje — nie budowane
@@ -184,9 +218,11 @@ spirala po lewej.
 
 | Cel | Co robi |
 |---|---|
-| `make book` | Buduje książkę i uruchamia wszystkie bramki |
-| `make sets` | Regeneruje zestawy rachunkowe i plan |
-| `make plan` | Regeneruje sam plan |
+| `make books` | Buduje **oba tomy** i uruchamia wszystkie bramki |
+| `make book` | Sam tom podstawowy |
+| `make book-adv` | Sam tom zaawansowany |
+| `make sets` | Regeneruje zestawy i plany obu tomów |
+| `make plan` | Regeneruje same plany |
 | `make drift` | Sprawdza, czy wygenerowane zestawy są aktualne |
 | `make answers` | Przelicza każdą odpowiedź z wydrukowanego pytania |
 | `make check` | Same bramki, bez budowania |

@@ -1,0 +1,40 @@
+% ============================================================
+%  Trening Mózgu — Zaawansowany -- A4, 11pt
+%  konradcinkusz
+%
+%  THE SECOND VOLUME, and it shares everything with the first except its
+%  contents: the same preamble, the same set format, the same gates, the same
+%  front matter. What differs is five lines here and the two files this reads.
+%
+%  Build:  make book-adv     -- from the repository root, gated on the log
+% ============================================================
+
+\documentclass[11pt,twoside,openright]{book}
+
+\newcommand{\btvoltitle}{Trening Mózgu}
+\newcommand{\btvolsub}{Poziom zaawansowany — dla wytrenowanych}
+\newcommand{\btplandir}{plan-adv/generated}
+
+\input{preamble}
+
+\hypersetup{
+  pdftitle={Trening Mózgu — Zaawansowany},
+  pdfauthor={konradcinkusz},
+}
+
+\begin{document}
+
+\frontmatter
+\input{frontmatter/title}
+\tableofcontents
+\input{frontmatter/dla-kogo-adv}
+\input{frontmatter/how-to-use}
+\input{frontmatter/plan}
+
+\mainmatter
+\input{structure-adv}
+
+\backmatter
+\odpowiedzi
+
+\end{document}

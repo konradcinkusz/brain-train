@@ -44,26 +44,39 @@ jobs:
       # include list: a set added to the generator and missing from that list
       # is a set nobody ever sees, with every other check green.
       - name: Generated sets are up to date
-        run: python3 tools/gen_sets.py --check
+        run: |
+          python3 tools/gen_sets.py --check
+          python3 tools/gen_sets_adv.py --check
 
-      - name: The plan matches the sets it names
-        run: python3 tools/gen_plan.py --check
+      - name: The plans match the sets they name
+        run: |
+          python3 tools/gen_plan.py --check
+          python3 tools/gen_plan.py --check --volume adv
 
       - name: Every printed answer re-computed from its printed question
         run: python3 tools/checkanswers.py
 
-      - name: Build the book
+      # BOTH volumes. root_file takes a list, so this is one action invocation
+      # and one TeX installation rather than two.
+      - name: Build both volumes
         # Step level, not an action input: latexmk's exit code is not the gate.
         # Keep going far enough to produce a log, then let checklog.py decide.
         continue-on-error: true
         uses: xu-cheng/latex-action@v4
         with:
           working_directory: book
-          root_file: main-pl-a4.tex
+          root_file: |
+            main-pl-a4.tex
+            main-pl-a4-adv.tex
           latexmk_use_xelatex: false
 
-      - name: Read the log properly
-        run: python3 tools/checklog.py book/main-pl-a4.log
+      # Both logs, always. A gate scoped to one volume is a promise scoped to
+      # one volume, and the other would ship whatever it liked with the check
+      # still green.
+      - name: Read both logs properly
+        run: |
+          python3 tools/checklog.py book/main-pl-a4.log
+          python3 tools/checklog.py book/main-pl-a4-adv.log
 
       # So a reviewer can read the actual pages from a PR without a local TeX.
       - uses: actions/upload-artifact@v4
@@ -73,4 +86,6 @@ jobs:
           path: |
             book/main-pl-a4.pdf
             book/main-pl-a4.log
+            book/main-pl-a4-adv.pdf
+            book/main-pl-a4-adv.log
           if-no-files-found: warn

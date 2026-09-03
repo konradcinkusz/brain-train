@@ -8,19 +8,47 @@ Context for continuing *Trening Mózgu*. Read this before touching the book.
 
 | | Done | Remaining |
 |---|---|---|
-| Book (A4) | 113 sets, 4424 exercises, four difficulty blocks, a 17-week plan, progress grids, front matter, TOC, answer appendix | — |
+| Tom I (A4) | 113 sets, 4424 exercises, four difficulty blocks, a 17-week plan, progress grids, front matter, TOC, answer appendix | — |
+| Tom II (A4) | 102 sets, 4032 exercises, four blocks of operations the first volume does not contain, a 16-week plan | — |
 | Build | `make book`, six gates, CI on every push and PR, tag-driven release | — |
 | Deck (Beamer) | Archived under `deck-archive/`, not built (#16, #21) | — |
 | Docs | README, `CONTRIBUTING.md`, this file | — |
 
-The book is **110 pages, 113 sets, 4424 exercises, 119 planned days, zero
-errors, zero unresolved references, zero overfull boxes**.
+Tom I is **110 pages, 113 sets, 4424 exercises, 119 planned days**; Tom II is
+**111 pages, 102 sets, 4032 exercises, 112 planned days**. Both: zero errors,
+zero unresolved references, zero overfull boxes.
 
 **Re-measure those numbers from the build in front of you.** Page counts and
 the overfull multiset are functions of the layout constants and do not survive
 being carried across a change.
 
 ---
+
+## Two volumes, one machine
+
+There are two books and they share everything except their contents: one
+`preamble.tex`, one set format, one answer store, one plan generator, one set
+of gates, one CI job. A volume is a `Volume` record -- which sets, which
+chapters, which directory -- and `book/main-pl-a4-adv.tex` differs from its
+sibling in five lines.
+
+**Tom II is not Tom I with bigger numbers.** That was decided rather than
+assumed: the first volume already ends on five-digit addition, three-by-two
+multiplication and compound percentages, so another digit is a longer sum and
+not a harder one, and ninety sets of it would be the same book printed twice.
+The second volume is positional systems, modular arithmetic, the structure of
+a number, fractions multiplied and divided, exponents that are negative or
+fractional, logarithms, and the applied calculations where the intuitive
+answer is reliably wrong.
+
+**Seeds: 1001--1225 are Tom I's and 2001--2100 are Tom II's**, and `audit()`
+refuses a seed the other volume already holds. Two books printing the same
+forty exercises is a wasted page nobody would ever notice.
+
+**Every gate covers both.** `make check` reads both logs, `checkanswers.py`
+globs `book/sets*/generated`, and CI builds both roots in one action. A gate
+scoped to one volume is a promise scoped to one volume, and the other would go
+on shipping whatever it liked with everything green.
 
 ## What this book is
 
