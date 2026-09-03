@@ -46,24 +46,60 @@ import argparse
 import sys
 from collections import defaultdict, deque
 from pathlib import Path
+from typing import NamedTuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from gen_sets import BLOCK_TITLES, book_order  # noqa: E402
+from gen_sets import BASIC, Volume, book_order  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "book" / "plan" / "generated"
 
-WEEKS = 17
 DAYS = 7                      # a training week, rest days included by the reader
 BENCH_DAY = 7                 # the last day of each week is a measurement
-# Which block each week trains. Four, five, four, four: Blok II is the working
-# range and the one worth the extra week. Seventeen weeks is four months of
-# daily work, and the reader who stops at thirteen has still finished a course.
-PHASE = {**{w: 1 for w in range(1, 5)},
-         **{w: 2 for w in range(5, 10)},
-         **{w: 3 for w in range(10, 14)},
-         **{w: 4 for w in range(14, 18)}}
-PHASES = (1, 2, 3, 4)
+
+
+class Plan(NamedTuple):
+    """One volume's schedule. The two books are the same course twice over --
+    same week, same benchmark day, same repeat interval -- and differ only in
+    how many weeks each block gets, which is a property of how much material
+    the block has."""
+    vol: Volume
+    dir: str                  # under book/: `plan` or `plan-adv`
+    weeks: dict               # week number -> which block it trains
+    hand_phase: int           # which phase the hand-written sets are dealt into
+
+    @property
+    def out(self):
+        return ROOT / "book" / self.dir / "generated"
+
+    @property
+    def n_weeks(self):
+        return len(self.weeks)
+
+    @property
+    def phases(self):
+        return tuple(sorted(set(self.weeks.values())))
+
+
+def spread(*lengths) -> dict:
+    """Weeks per block, in order, as a week -> block map. Written as a run of
+    lengths because that is the decision -- four weeks of Blok I, five of Blok
+    II -- rather than as a table of eighteen entries nobody can check."""
+    weeks, w = {}, 0
+    for block, n in enumerate(lengths, start=1):
+        for _ in range(n):
+            w += 1
+            weeks[w] = block
+    return weeks
+
+
+# Four, five, four, four: Blok II is the working range and the one worth the
+# extra week. Seventeen weeks is four months of daily work, and the reader who
+# stops at thirteen has still finished a course.
+# The puzzle sets go into Blok III's weeks, NOT the last block's: they are the
+# longest and least mechanical in the book, so they belong where the reader is
+# strongest rather than in week two -- and Blok IV's weeks are already the
+# hardest material in the volume.
+PLANS = {"basic": Plan(BASIC, "plan", spread(4, 5, 4, 4), hand_phase=3)}
 
 
 def interleave(items):
@@ -112,37 +148,39 @@ def select(items, k):
     return picked, [x for x in items if id(x) not in taken]
 
 
-def schedule():
+def schedule(plan: Plan):
     """Ninety-one days, and the spare sets the plan did not need."""
-    order = book_order()
+    order = book_order(plan.vol)
     # The benchmarks are matched to phases BY POSITION, not by their star
     # rating: Blok III's and Blok IV's both carry three stars, so keying on
     # that silently gave two phases the same set and left one unused.
     marks = [i for i in order if i.block == 9]
-    if len(marks) != len(PHASES):
+    if len(marks) != len(plan.phases):
         raise SystemExit(f"gen_plan: {len(marks)} zestawów kontrolnych "
-                         f"na {len(PHASES)} bloków -- po jednym na blok")
-    bench = dict(zip(PHASES, marks))
+                         f"na {len(plan.phases)} bloków -- po jednym na blok")
+    bench = dict(zip(plan.phases, marks))
     # Blok III shares its weeks with the hand-written puzzle sets: they are the
     # longest and least mechanical in the book, so they belong where the reader
     # is strongest rather than in week two. They go through interleave() WITH
     # the block rather than after it -- appended, all four landed on
     # consecutive days at the very end, which is the blocked practice this
     # whole ordering exists to avoid.
-    phase = {p: [i for i in order if i.block == p] for p in PHASES}
-    phase[3] += [i for i in order if i.block == 8]
+    phase = {p: [i for i in order if i.block == p] for p in plan.phases}
+    phase[plan.hand_phase] += [i for i in order
+                               if i.block == plan.vol.hand_block]
 
     # How many days each phase has to fill, which is what decides how many of
     # its sets are used at all.
-    need = {p: sum(DAYS - 1 for w, q in PHASE.items() if q == p) for p in PHASES}
+    need = {p: sum(DAYS - 1 for w, q in plan.weeks.items() if q == p)
+            for p in plan.phases}
     pools, spare = {}, []
     for p, xs in phase.items():
         picked, left = select(xs, need[p])
         pools[p], spare = deque(interleave(picked)), spare + left
 
     days = []
-    for week in range(1, WEEKS + 1):
-        p = PHASE[week]
+    for week in range(1, plan.n_weeks + 1):
+        p = plan.weeks[week]
         for d in range(1, DAYS + 1):
             n = (week - 1) * DAYS + d
             if d == BENCH_DAY:
@@ -190,13 +228,13 @@ def esc(s: str) -> str:
     return s.replace("—", "---")
 
 
-def render(days, repeats, spare) -> str:
+def render(plan: Plan, days, repeats, spare) -> str:
     out = ["% GENERATED by tools/gen_plan.py -- do not edit.\n"]
-    for week in range(1, WEEKS + 1):
+    for week in range(1, plan.n_weeks + 1):
         rows = [d for d in days if d[1] == week]
-        roman = {1: "I", 2: "II", 3: "III", 4: "IV"}[PHASE[week]]
+        roman = {1: "I", 2: "II", 3: "III", 4: "IV"}[plan.weeks[week]]
         out.append(f"\n\\btweek{{{week}}}{{Blok "
-                   f"{roman} --- {BLOCK_TITLES[PHASE[week]]}}}\n")
+                   f"{roman} --- {plan.vol.titles[plan.weeks[week]]}}}\n")
         # \noindent: a tabular opens a paragraph, and without this every
         # table in the plan sits one \parindent to the right of the rule above
         # it.
@@ -231,9 +269,9 @@ def render(days, repeats, spare) -> str:
     return "".join(out)
 
 
-def write(text: str, name: str, check: bool) -> bool:
-    OUT.mkdir(parents=True, exist_ok=True)
-    dest = OUT / name
+def write(out: Path, text: str, name: str, check: bool) -> bool:
+    out.mkdir(parents=True, exist_ok=True)
+    dest = out / name
     cur = dest.read_text(encoding="utf8") if dest.exists() else None
     if cur == text:
         return False
@@ -247,9 +285,12 @@ def write(text: str, name: str, check: bool) -> bool:
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--check", action="store_true")
+    p.add_argument("--volume", default="basic", choices=sorted(PLANS),
+                   help="which book's plan to lay out")
     a = p.parse_args()
 
-    days, repeats, spare = schedule()
+    plan = PLANS[a.volume]
+    days, repeats, spare = schedule(plan)
     # THE PROSE'S NUMBERS COME FROM HERE, NOT FROM A KEYBOARD. `91 dni, 13
     # tygodni` was written into the chapter, its title, its running head, its
     # table of contents entry and its own file header, and a fourth month made
@@ -258,14 +299,16 @@ def main() -> int:
     # been: name the count once, compute it, and let the page reference it.
     numbers = ("% GENERATED by tools/gen_plan.py -- do not edit.\n"
                f"\\newcommand{{\\btplandni}}{{{len(days)}}}\n"
-               f"\\newcommand{{\\btplantyg}}{{{WEEKS}}}\n"
+               f"\\newcommand{{\\btplantyg}}{{{plan.n_weeks}}}\n"
                f"\\newcommand{{\\btplanpomiarow}}"
                f"{{{sum(1 for d in days if d[3])}}}\n"
                f"\\newcommand{{\\btplanpowtorek}}{{{len(repeats)}}}\n"
                f"\\newcommand{{\\btplanzapas}}{{{len(spare)}}}\n")
-    stale = (write(render(days, repeats, spare), "plan.tex", a.check)
-             | write(numbers, "liczby.tex", a.check)
-             | write(render_postep(book_order()), "postep.tex", a.check))
+    stale = (write(plan.out, render(plan, days, repeats, spare),
+                   "plan.tex", a.check)
+             | write(plan.out, numbers, "liczby.tex", a.check)
+             | write(plan.out, render_postep(book_order(plan.vol)),
+                     "postep.tex", a.check))
     if stale:
         print("\nPlan out of date. Run `make plan`.")
         return 1
@@ -275,7 +318,7 @@ def main() -> int:
         if not is_bench:
             runs = runs + 1 if item.family == prev else 1
             longest, prev = max(longest, runs), item.family
-    print(f"  {len(days)} dni · {WEEKS} tygodni · "
+    print(f"  {plan.vol.key}: {len(days)} dni · {plan.n_weeks} tygodni · "
           f"{sum(1 for d in days if d[3])} pomiarów kontrolnych · "
           f"{len(repeats)} powtórek · {len(spare)} zestawów w zapasie")
     print(f"  najdłuższa seria tej samej rodziny pod rząd: {longest}")

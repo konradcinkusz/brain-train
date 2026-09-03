@@ -1182,7 +1182,40 @@ class Item(NamedTuple):
     count: int
 
 
-def book_order() -> list[Item]:
+class Volume(NamedTuple):
+    """One BOOK. There are two -- the basic course and the advanced one -- and
+    they share every line above this point: the same page format, the same
+    forty-exercise set, the same gates, the same plan machinery. What differs
+    is which sets are in them and where those sets live.
+
+    Holding that in one record rather than in module-level globals is what
+    stops the second volume from being a copy of the first with the numbers
+    changed, which is the shape this repository already refuses for the
+    arithmetic itself.
+    """
+    key: str            # names the make target, the main file and the artefact
+    dir: str            # under book/: `sets` or `sets-adv`
+    title: str          # what the volume is called on its own title page
+    sets: list          # generated
+    hand: list          # hand-written, by metadata only
+    titles: dict        # chapter number -> chapter name, in book order
+
+    @property
+    def out(self):
+        return ROOT / "book" / self.dir / "generated"
+
+    @property
+    def hand_block(self):
+        """The chapter the hand-written sets occupy, or None if there are
+        none. Read from the volume rather than hard-coded, because the
+        advanced book has fewer of them and in a different chapter."""
+        return next((b for b, t in self.titles.items() if t == HAND_CHAPTER), None)
+
+
+HAND_CHAPTER = "Łamigłówki"
+
+
+def book_order(vol: "Volume") -> list[Item]:
     """Every set in the book, numbered as the reader will see it numbered.
 
     The `zestaw` counter is global and steps once per set in file order, so
@@ -1190,14 +1223,18 @@ def book_order() -> list[Item]:
     that is exactly why nothing else may hold a second copy of the order.
     """
     out, n = [], 0
-    for b in sorted(BLOCK_TITLES):
-        pool = HAND if b == 8 else [s for s in SETS if s.block == b]
+    for b in sorted(vol.titles):
+        pool = (vol.hand if b == vol.hand_block
+                else [s for s in vol.sets if s.block == b])
         for x in pool:
             n += 1
             out.append(Item(n, x.name, x.title, x.stars,
                             x.target if isinstance(x, Hand) else target(x.secs),
                             x.family, b, x.count if isinstance(x, Hand) else N))
     return out
+
+
+BASIC = Volume("basic", "sets", "Trening Mózgu", SETS, HAND, BLOCK_TITLES)
 
 
 def render(s: Set) -> str:
@@ -1223,7 +1260,7 @@ def render(s: Set) -> str:
                          opt="" if s.rows == 1 else f"[{s.rows}]")
 
 
-def audit() -> None:
+def audit(vol: Volume, other: Volume = None) -> None:
     """Two things the tree cannot show and no build would ever complain about.
 
     A REPEATED SEED is two sets carrying the same forty exercises under two
@@ -1235,8 +1272,8 @@ def audit() -> None:
     file, the include list names it once, and the book is one set short with
     every gate green.
     """
-    for what, seen in (("seed", Counter(s.seed for s in SETS)),
-                       ("name", Counter(s.name for s in SETS))):
+    for what, seen in (("seed", Counter(s.seed for s in vol.sets)),
+                       ("name", Counter(s.name for s in vol.sets))):
         dupes = [k for k, n in seen.items() if n > 1]
         if dupes:
             raise SystemExit(f"gen_sets: repeated {what}(s): "
@@ -1244,69 +1281,79 @@ def audit() -> None:
     # A hand-written set is named here and written by a person, so the one
     # thing this can check is that the file the include list will point at
     # actually exists -- otherwise the failure is a LaTeX error naming a path.
-    for h in HAND:
-        if not (ROOT / "book" / "sets" / f"{h.name}.tex").exists():
+    for h in vol.hand:
+        if not (ROOT / "book" / vol.dir / f"{h.name}.tex").exists():
             raise SystemExit(f"gen_sets: HAND names {h.name}.tex, "
-                             f"which is not in book/sets/")
+                             f"which is not in book/{vol.dir}/")
+    # AND THE SEEDS OF THE TWO VOLUMES MAY NOT MEET. They are separate books
+    # and a repeated seed across them is not a defect anybody would see -- it
+    # is simply the same forty exercises printed in both, which is a waste of
+    # a page rather than a bug. Checking it costs nothing and the allocation is
+    # documented in CLAUDE.md, so a drift is worth hearing about.
+    if other is not None:
+        clash = {s.seed for s in vol.sets} & {s.seed for s in other.sets}
+        if clash:
+            raise SystemExit(
+                f"gen_sets: seeds shared between the {vol.key} and "
+                f"{other.key} volumes: "
+                + ", ".join(str(c) for c in sorted(clash)))
 
 
-def main() -> int:
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--check", action="store_true")
-    a = p.parse_args()
-
-    audit()
-    OUT.mkdir(parents=True, exist_ok=True)
+def build(vol: Volume, check: bool, other: Volume = None) -> int:
+    """Write (or check) one volume's generated tree, and report what is in it."""
+    audit(vol, other)
+    vol.out.mkdir(parents=True, exist_ok=True)
     stale, total = [], 0
-    for s in SETS:
+    for s in vol.sets:
         text = render(s)
         total += text.count("\\z{") + text.count("\\zz{")
-        dest = OUT / f"{s.name}.tex"
+        dest = vol.out / f"{s.name}.tex"
         cur = dest.read_text(encoding="utf8") if dest.exists() else None
         if cur == text:
             continue
-        if a.check:
+        if check:
             stale.append(dest.relative_to(ROOT))
         else:
             dest.write_text(text, encoding="utf8")
 
     # The include lists are generated too, one per block, because a block is a
-    # chapter: a set added to SETS and forgotten in structure.tex is a set
-    # nobody ever sees, and every other check passes.
+    # chapter: a set added to a volume and forgotten in its structure file is a
+    # set nobody ever sees, and every other check passes.
     # Each \input is preceded by the number the set will carry, and the set
     # refuses to typeset under any other one. That is what lets the plan print
     # `Zestaw 41` as a literal: the number it computes and the number LaTeX
     # steps to are the same thing worked out twice, and reordering a chapter in
-    # structure.tex would otherwise send every row of the plan one set off,
-    # silently, with every other gate green.
-    lists, order = {}, {i.name: i.num for i in book_order()}
-    for b in sorted(BLOCK_TITLES):
-        pool = ([(h.name, f"sets/{h.name}") for h in HAND] if b == 8
-                else [(s.name, f"sets/generated/{s.name}")
-                      for s in SETS if s.block == b])
+    # the structure file would otherwise send every row of the plan one set
+    # off, silently, with every other gate green.
+    lists, order = {}, {i.name: i.num for i in book_order(vol)}
+    for b in sorted(vol.titles):
+        pool = ([(h.name, f"{vol.dir}/{h.name}") for h in vol.hand]
+                if b == vol.hand_block
+                else [(s.name, f"{vol.dir}/generated/{s.name}")
+                      for s in vol.sets if s.block == b])
         body = "".join(f"\\btexpect{{{order[n]}}}\\input{{{path}}}\n"
                        for n, path in pool)
         lists[f"_blok-{b}.tex"] = (
             "% GENERATED by tools/gen_sets.py -- do not edit.\n" + body)
     for fname, text in lists.items():
-        dest = OUT / fname
+        dest = vol.out / fname
         cur = dest.read_text(encoding="utf8") if dest.exists() else None
         if cur == text:
             continue
-        if a.check:
+        if check:
             stale.append(dest.relative_to(ROOT))
         else:
             dest.write_text(text, encoding="utf8")
 
     # And the other direction. Renaming a set leaves the old file behind, and
     # nothing above would ever look at it again: it is not in a block list, so
-    # it is not in the book, and it is not in SETS, so no check compares it. It
-    # would sit in the tree looking like a set the book contains.
-    keep = {f"{s.name}.tex" for s in SETS} | set(lists)
-    for f in sorted(OUT.glob("*.tex")):
+    # it is not in the book, and it is not in the volume, so no check compares
+    # it. It would sit in the tree looking like a set the book contains.
+    keep = {f"{s.name}.tex" for s in vol.sets} | set(lists)
+    for f in sorted(vol.out.glob("*.tex")):
         if f.name in keep:
             continue
-        if a.check:
+        if check:
             stale.append(f.relative_to(ROOT))
         else:
             f.unlink()
@@ -1317,14 +1364,21 @@ def main() -> int:
         print(f"\n{len(stale)} generated file(s) out of date. Run `make sets`.")
         return 1
 
-    order = book_order()
-    for b, name in BLOCK_TITLES.items():
+    order = book_order(vol)
+    for b, name in vol.titles.items():
         xs = [i for i in order if i.block == b]
         print(f"  blok {b} {name:<18} zestawy {xs[0].num:>2}-{xs[-1].num:<3}"
               f" {len(xs):>3} sets, {sum(i.count for i in xs):>5} exercises")
     print(f"  {'':<25}{len(order):>13} sets, "
           f"{sum(i.count for i in order):>5} exercises")
     return 0
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--check", action="store_true")
+    a = p.parse_args()
+    return build(BASIC, a.check)
 
 
 if __name__ == "__main__":

@@ -36,7 +36,12 @@ from math import gcd, isqrt
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-GEN = ROOT / "book" / "sets" / "generated"
+# EVERY volume's generated tree, found rather than listed. A second book whose
+# answers nobody re-computes is a second book with no gate on it, and the
+# failure would be silent -- the check would go on printing a green line about
+# the volume it does know. `book/sets*/generated` picks up a volume the day it
+# is added, which is the only arrangement in which forgetting is impossible.
+GEN_DIRS = sorted((ROOT / "book").glob("sets*/generated"))
 
 ROMAN_V = {"I": 1, "V": 5, "X": 10, "L": 50, "C": 100, "D": 500, "M": 1000}
 ROMAN_W = ((100, "C"), (90, "XC"), (50, "L"), (40, "XL"),
@@ -360,9 +365,13 @@ def main() -> int:
 
     checked, bad, unknown = 0, [], Counter()
     shown = {}
-    for f in sorted(GEN.glob("*.tex")):
-        if f.name.startswith("_"):
-            continue
+    files = [f for d in GEN_DIRS for f in sorted(d.glob("*.tex"))
+             if not f.name.startswith("_")]
+    if not files:
+        print("  Nie znaleziono żadnego wygenerowanego zestawu -- "
+              "uruchom `make sets`")
+        return 1
+    for f in files:
         text = f.read_text(encoding="utf8")
         for q, ans in re.findall(r"\\zz?\{(.*?)\}\{(.*?)\}\n", text):
             try:
@@ -398,7 +407,8 @@ def main() -> int:
         for k, c in unknown.most_common():
             print(f"      {c:>5}  {k}")
 
-    print(f"  {checked} odpowiedzi przeliczonych niezależnie, "
+    where = ", ".join(d.parent.name for d in GEN_DIRS)
+    print(f"  {checked} odpowiedzi przeliczonych niezależnie ({where}), "
           f"{len(bad)} błędnych, {sum(unknown.values())} nierozpoznanych")
     return 1 if bad or unknown else 0
 
